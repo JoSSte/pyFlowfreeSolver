@@ -78,7 +78,7 @@ class Field:
 
     # DisplayStuff
     def displayField(self):
-        print("Field #%d, row: %d, col: %d, neighbours:%d" % (self.number, self.row, self.column, self.numNeighbours()))
+        print("Field #%d, row: %d, col: %d, neighbours: %d, Occupied: %d" % (self.number, self.row, self.column, self.numNeighbours(), self.isOccupied()))
 
     def showNeighbours(self):
         print("N: %s, S: %s, E: %s, W: %s" % (self.number, self.north is not None, self.south is not None, self.east is not None, self.west is not None ))
@@ -115,7 +115,7 @@ class GameBoard:
         for f in self.fields:
             f.displayField()
             
-gb = GameBoard(5,10)
+gb = GameBoard(3,5)
 gb.printBoard()
 
 #f1 = Field(2,2)
