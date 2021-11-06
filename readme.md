@@ -41,3 +41,8 @@ This includes the cells with only 2 neighbours twice, except for cell 1
 1. Bottom row (`n>=(h*w)-w`)
 1. First column (`n%(w+1)=0`) (doesn't match cell 1)
 1. Last column (`n%w=0`)
+
+## Calculating total number of intersections
+All the vertical paths can be summed up as the number of columns minus one, multiplied by the number of rows. Similarly, the horizontal paths can be summe up as the number of rows minus one, multiplied my the number of columns. 
+
+`t=(w-1)*h+(h-1)*w`
