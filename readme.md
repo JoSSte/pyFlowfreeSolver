@@ -57,6 +57,7 @@ Conditions that would cause a failure state, ie the game would be unsolvable.
 * **Orphan unoccupied cell.** Cell where all neighbours are occupied, but the cell itself isn't.
 * **Single cell kink.** Line creating a cell with only one free neighbour, all other (max 3) neighbouring cells occupied.
 * **Orphaned Piece.** Pieces of the same colour on opposite sides of the line.
+* **Invalid Circumnavigation.** Piece with a single cell on each side after passing a line.
 
 ## Path solving tactics
 

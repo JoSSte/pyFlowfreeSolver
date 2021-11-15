@@ -1,33 +1,53 @@
 class Piece:
     'class to'
     pieceCount = 0
+
     def __init__(self, color):
         self.color = color
         Piece.pieceCount += 1
+
 
 class Field:
     'class to contain a single field'
     fieldCount = 0
 
-    
     def __init__(self, row, column):
         Field.fieldCount += 1
         self.number = Field.fieldCount
         self.row = row
         self.column = column
+        self.occupied = False
 
-        #Contents
+        # Contents
         self.piece = None
         self.line = None
 
-        #Neighbours
+        # Neighbours
         self.north = None
         self.south = None
         self.west = None
         self.east = None
-    
+
     def addPiece(self, piece):
+        # no check for line presence since this is not drawn after lines...
+        self.occupied = True
         self.piece = piece
+
+    def addLine(self, colour):
+        if(self.occupied):
+            print("Already occupied")
+            return False
+        else:
+            self.occupied = True
+            self.line = colour
+
+    def clearLine(self):
+        if(not self.occupied):
+            return False
+        else:
+            self.line = None
+            self.occupied = False
+            return True
 
     def getRow(self):
         return self.row
@@ -70,27 +90,30 @@ class Field:
         return self.west
 
     def numNeighbours(self):
-        count=0
+        count = 0
         if(self.north is not None):
-            count +=1
+            count += 1
         if(self.south is not None):
-            count +=1
+            count += 1
         if(self.east is not None):
-            count +=1
+            count += 1
         if(self.west is not None):
-            count +=1
+            count += 1
         return count
-        
 
     # DisplayStuff
+
     def displayField(self):
-        print("Field #%d, row: %d, col: %d, neighbours: %d, Occupied: %d" % (self.number, self.row, self.column, self.numNeighbours(), self.isOccupied()))
+        print("Field #%d, row: %d, col: %d, neighbours: %d, Occupied: %d" % (
+            self.number, self.row, self.column, self.numNeighbours(), self.isOccupied()))
 
     def showNeighbours(self):
-        print("N: %s, S: %s, E: %s, W: %s" % (self.number, self.north is not None, self.south is not None, self.east is not None, self.west is not None ))
-    
+        print("N: %s, S: %s, E: %s, W: %s" % (self.number, self.north is not None,
+              self.south is not None, self.east is not None, self.west is not None))
+
     def isOccupied(self):
-        return self.piece is not None and self.line is not None
+        return self.occupied
+
 
 class GameBoard:
     def __init__(self, cols, rows):
@@ -98,24 +121,22 @@ class GameBoard:
         self.columns = cols
         self.rows = rows
         self.fields = []
-        
+
         # Create fields
         for row in range(1, self.rows+1):
             for column in range(1, self.columns+1):
                 self.fields.append(Field(row, column))
-        
+
         # Set southern neighbours (also sets northern neighbours)
         for idx, f in enumerate(self.fields):
             if(idx < (len(self.fields)-self.columns)):
                 f.setSouth(self.fields[idx + self.columns])
-        
+
         # Set eastern neighbours
         for idx, f in enumerate(self.fields):
-            if((idx +1) % self.columns != 0):
+            if((idx + 1) % self.columns != 0):
                 f.setEast(self.fields[idx + 1])
-    
+
     def printBoard(self):
         for f in self.fields:
             f.displayField()
-            
-

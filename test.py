@@ -13,6 +13,7 @@ class TestField(unittest.TestCase):
         #self.assertEqual(Field.fieldCount, 1)
         self.assertEqual(f1.row, 3)
         self.assertEqual(f1.column, 2)
+        self.assertFalse(f1.isOccupied())
 
     def testNeighbours(self):
         """
@@ -48,7 +49,14 @@ class TestField(unittest.TestCase):
         f1 = Field(2, 2)
         self.assertFalse(f1.isOccupied())
         f1.addPiece(Piece('red'))
-        # self.assertTrue(f1.isOccupied())
+        self.assertTrue(f1.isOccupied())
+        f2 = Field(1, 1)
+        self.assertFalse(f2.isOccupied())
+        f2.addLine('red')
+        self.assertTrue(f2.isOccupied())
+        f2.clearLine()
+        self.assertFalse(f2.isOccupied())
+
 
 if __name__ == '__main__':
     unittest.main()
