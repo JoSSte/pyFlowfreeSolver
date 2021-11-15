@@ -66,8 +66,8 @@ Conditions that would cause a failure state, ie the game would be unsolvable.
 This tactic wil most likely work for simple, small boards. In case of having to snake around another this tactic will fail. May be able to be used as a trailbreaker.
 * **Single cell path.** If both pieces share a single cell neighbour, so that filling out that cell will connect them. E.g. diagonals may be a more certain win, verticals or horizontals may not be.
 * **Path finding algorithms** These will find the shortest path, but may not be efficient for finding the first paths in an unsolved board.
-  * **A-Star.** Using the [A*](https://en.wikipedia.org/wiki/A*_search_algorithm) algorithm for path finding.
-  * **Dijkstra.** Using [Dijkstra's algorithm](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm) for path finding. 
+  * **A-Star.** Using the [A*](https://en.wikipedia.org/wiki/A*_search_algorithm) algorithm for path finding. [Sample Python Implementation](https://www.simplifiedpython.net/a-star-algorithm-python-tutorial/)
+  * **Dijkstra.** Using [Dijkstra's algorithm](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm) for path finding. [Sample Python implementation](https://www.udacity.com/blog/2021/10/implementing-dijkstras-algorithm-in-python.html)
 
 ### Path certainty score
 * Any path creating a failure condition with no other paths drawn should be considered unusable - negative score.
