@@ -92,10 +92,8 @@ class GameBoard:
         self.columns = cols
         self.rows = rows
         self.fields = []
-        self.populateFields()
-    
-    def populateFields(self):
         
+        # Create fields
         for row in range(1, self.rows+1):
             for column in range(1, self.columns+1):
                 self.fields.append(Field(row, column))
@@ -109,7 +107,6 @@ class GameBoard:
         for idx, f in enumerate(self.fields):
             if((idx +1) % self.columns != 0):
                 f.setEast(self.fields[idx + 1])
-        
     
     def printBoard(self):
         for f in self.fields:
@@ -119,21 +116,21 @@ gb = GameBoard(3,5)
 gb.printBoard()
 
 #f1 = Field(2,2)
-#f2 = Field(4,4)
+f2 = Field(4,4)
 #f3 = Field(4,3)
 #f1.addPiece(Piece('red'))
 #f2.setWest(f3)
 #
 #print("%d pieces" % Piece.pieceCount)
-#print("%d fields" % Field.fieldCount)
+print("%d fields" % Field.fieldCount)
 #
 #f1.displayField()
 #print(f1.isOccupied())
 #print(f1.displayNeighbours())
 #
-#f2.displayField()
-#print(f2.isOccupied())
-#print(f2.displayNeighbours())
+f2.displayField()
+print(f2.isOccupied())
+print(f2.numNeighbours())
 #
 #f3.displayField()
 #print(f3.isOccupied())
