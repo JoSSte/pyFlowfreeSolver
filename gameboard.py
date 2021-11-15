@@ -29,6 +29,12 @@ class Field:
     def addPiece(self, piece):
         self.piece = piece
 
+    def getRow(self):
+        return self.row
+
+    def getColumn(self):
+        return self.column
+
     # Set Neighbours
     def setNorth(self, field):
         self.north = field
@@ -112,27 +118,4 @@ class GameBoard:
         for f in self.fields:
             f.displayField()
             
-gb = GameBoard(3,5)
-gb.printBoard()
-
-#f1 = Field(2,2)
-f2 = Field(4,4)
-#f3 = Field(4,3)
-#f1.addPiece(Piece('red'))
-#f2.setWest(f3)
-#
-#print("%d pieces" % Piece.pieceCount)
-print("%d fields" % Field.fieldCount)
-#
-#f1.displayField()
-#print(f1.isOccupied())
-#print(f1.displayNeighbours())
-#
-f2.displayField()
-print(f2.isOccupied())
-print(f2.numNeighbours())
-#
-#f3.displayField()
-#print(f3.isOccupied())
-#print(f3.displayNeighbours())
 
