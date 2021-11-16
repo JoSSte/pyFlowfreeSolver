@@ -6,12 +6,34 @@ class Piece:
         self.color = color
         Piece.pieceCount += 1
 
+class Line:
+    path = []
+    color = ''
+    def __init__(self, color, coords) -> None:
+        self.path = coords
+        self.color = color
+    
+    def addCoordinate(self, coord):
+        self.path.append(coord)
+
+#class Path:
+#    start
+#    directions = []
+#    color = ''
+#    def __init__(self, color, start, directions) -> None:
+#        self.directions = directions
+#        self.start = start
+#        self.color = color
+#    
+#    def addCoordinate(self, coord: Coordinate):
+#        self.path.append(coord)
+
 
 class Field:
     'class to contain a single field'
     fieldCount = 0
 
-    def __init__(self, row, column):
+    def __init__(self, column, row):
         Field.fieldCount += 1
         self.number = Field.fieldCount
         self.row = row
@@ -104,8 +126,8 @@ class Field:
     # DisplayStuff
 
     def displayField(self):
-        print("Field #%d, row: %d, col: %d, neighbours: %d, Occupied: %d" % (
-            self.number, self.row, self.column, self.numNeighbours(), self.isOccupied()))
+        print("Field #%d, col: %d, row: %d, neighbours: %d, Occupied: %d" % (
+            self.number, self.column, self.row, self.numNeighbours(), self.isOccupied()))
 
     def showNeighbours(self):
         print("N: %s, S: %s, E: %s, W: %s" % (self.number, self.north is not None,
@@ -125,7 +147,7 @@ class GameBoard:
         # Create fields
         for row in range(1, self.rows+1):
             for column in range(1, self.columns+1):
-                self.fields.append(Field(row, column))
+                self.fields.append(Field(column, row))
 
         # Set southern neighbours (also sets northern neighbours)
         for idx, f in enumerate(self.fields):

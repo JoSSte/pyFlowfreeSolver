@@ -8,7 +8,7 @@ class TestField(unittest.TestCase):
         """
         test that we can create a field
         """
-        f1 = Field(3, 2)
+        f1 = Field(2, 3)
         #print("%d fields found" % Field.fieldCount)
         #self.assertEqual(Field.fieldCount, 1)
         self.assertEqual(f1.row, 3)
