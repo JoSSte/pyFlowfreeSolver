@@ -46,18 +46,18 @@ def getColor(color):
     if(color == 'O'):
         return colored.fg(214)
 
-def prettyPrintFields(fields, columns):
-    for idx, f in enumerate(fields):
+def prettyPrintFields(gameboard):
+    for idx, f in enumerate(gameboard.fields):
         ender = ''
-        if((idx + 1) % columns == 0):
+        if((idx + 1) % gameboard.columns == 0):
             ender  = "\n"
         if(f.isOccupied()):
             if(f.piece is not None):
-                print(getColor(f.piece.color) + f.piece.color, end = ender)
+                print(getColor(f.piece.color) + '●', end = ender) #'◼●✪✖'
             if(f.line is not None):
-                print(getColor(f.line) + '-', end = ender)
+                print(getColor(f.line) + '☓', end = ender)
         else:
-            print(colored.fg(15) + '_', end = ender)
+            print(colored.fg(15) + '˽', end = ender)
 
 gb = GameBoard(5, 5)
 gb.fields[ 0].addPiece(Piece('R')) #Red
@@ -83,4 +83,4 @@ gb.fields[ 6].addLine('G') #Green
 gb.fields[11].addLine('G') #Green
 
 #gb.printBoard()
-prettyPrintFields(gb.fields, gb.columns)
+prettyPrintFields(gb)
