@@ -1,3 +1,8 @@
+'''
+This is a gui debugger to print a gameboard.
+displays a pygame window and saves a .png file with the board.
+'''
+
 from gameboard import Piece, Field, GameBoard, Line
 import pygame as pg
 
