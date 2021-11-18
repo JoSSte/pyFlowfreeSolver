@@ -183,5 +183,16 @@ class GameBoard:
                     if(not f.piece.color == l.color):
                         print("%d, %d is occupied already" % (segment[0], segment[1]))
                         raise Exception("Cell %d,%d is already occupied" % (segment[0], segment[1]))
+            else:
+                f.addLine(l.color)
         # if we get to here, all cells in the line are free
         self.lines.append(l)
+
+    def isSolved(self)->bool:
+        solved = True
+        for f in self.fields:
+            if (not f.isOccupied()):
+                print("%d, %d is unoccupied" % (f.getX(), f.getY()))
+                solved = False
+
+        return solved
