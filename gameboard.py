@@ -162,7 +162,7 @@ class GameBoard:
             f.displayField()
 
     def coords2Offset(self, x: int, y: int) -> int:
-        return (y-1) * self.rows + (x - 1)
+        return (y-1) * self.columns + (x - 1)
 
     def getField(self, x:int, y:int)-> Field:
         return self.fields[self.coords2Offset(x,y)]
@@ -185,14 +185,19 @@ class GameBoard:
                         raise Exception("Cell %d,%d is already occupied" % (segment[0], segment[1]))
             else:
                 f.addLine(l.color)
+        #TODO: Check that end and start are on a piece...
+        
         # if we get to here, all cells in the line are free
         self.lines.append(l)
 
     def isSolved(self)->bool:
         solved = True
+        if(len(self.fields)/2 != len(self.lines)):
+            #print("Number of piece-pairs does not match number of lines. Not solved...")
+            solved = False
         for f in self.fields:
             if (not f.isOccupied()):
-                print("%d, %d is unoccupied" % (f.getX(), f.getY()))
+                #print("%d, %d is unoccupied" % (f.getX(), f.getY()))
                 solved = False
 
         return solved
