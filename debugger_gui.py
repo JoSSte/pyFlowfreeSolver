@@ -11,54 +11,31 @@ SILVER = (200, 200, 200)
 GRAY = (40, 40, 40)
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-BLUE = (0, 0, 255)
+
+BLUE = (12, 41, 254)
 RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-YELLOW = (255, 255, 0)
-ORANGE = (255, 128, 0)
+GREEN = (0, 141, 0)
+YELLOW = (234, 224, 0)
+ORANGE = (251, 137, 0)
+PURPLE = (128, 0, 128)
+PINK = (255, 10, 201)
+BROWN = (165, 42, 42)
+CYAN = (0, 255, 255)
+
 
 BLOCK_SIZE = 40
 ROWS = 5
 COLS = 5
 
-"""
-
-Testing board and solver
-========================
-
-Layout: 
-
-1,1 red
-3,1 green
-5,1 yellow
-
-3,2 blue
-5,2 orange
-
-2,4 green
-4,4 yellow
-
-2,5 red
-3,5 blue
-4,5 orange
-
-
-Red path: 
-1,1 -> 1,2 -> 1,3 -> 1,4 -> 1,5 -> 2,5
-S,S,S,S,E
-
-Green path: 
-3,1 -> 2,1 -> 2,2 -> 2,3 -> 2,4
-W,S,S,S
-
-"""
-
-
 # convert row/column to x/y based on the BLOCK_SIZE
+
+
 def coordinate2pyGameCoordinate(x, y):
     return [(BLOCK_SIZE*x)-(BLOCK_SIZE//2), (BLOCK_SIZE*y)-(BLOCK_SIZE//2)]
 
 # function to convert letter to colour
+
+
 def getColor(color):
     if(color == 'R'):
         return RED
@@ -77,7 +54,7 @@ def drawPiece(f: Field):
     colour = getColor(f.piece.color)
     # draw a BLUE circle
     # center coordinates (x, y)
-    center = coordinate2pyGameCoordinate(f.column,f.row)
+    center = coordinate2pyGameCoordinate(f.column, f.row)
     radius = round((BLOCK_SIZE//2)-2)
 
     # width of 0 (default) fills the circle
@@ -94,6 +71,16 @@ def drawLine(p: Line):
         coordinates.append(coordinate2pyGameCoordinate(cPos[0], cPos[1]))
     pg.draw.lines(win, getColor(p.color), False, coordinates, thickness)
 
+# draw all pieces and lines in the gameboard
+
+
+def drawContents(gb: GameBoard):
+    drawPieces(gb)
+    for l in gb.lines:
+        drawLine(l)
+# draw grid on gameboard
+
+
 def drawGrid(screen, w, h):
     for x in range(0, BLOCK_SIZE * w, BLOCK_SIZE):
         for y in range(0, BLOCK_SIZE * h, BLOCK_SIZE):
@@ -101,6 +88,8 @@ def drawGrid(screen, w, h):
             pg.draw.rect(screen, SILVER, rect, 1)
 
 # Draw pieces
+
+
 def drawPieces(gameboard: GameBoard):
     for f in gameboard.fields:
         if(f.isOccupied()):
@@ -108,31 +97,28 @@ def drawPieces(gameboard: GameBoard):
                 drawPiece(f)
 
 
+# initialize board
 gb = GameBoard(COLS, ROWS)
-gb.fields[0].addPiece(Piece('R'))  # Red
-gb.fields[21].addPiece(Piece('R')) #Red
-gb.fields[ 2].addPiece(Piece('G')) #Green
-gb.fields[16].addPiece(Piece('G')) #Green
-gb.fields[ 7].addPiece(Piece('B')) #Blue
-gb.fields[22].addPiece(Piece('B')) #Blue
-gb.fields[ 4].addPiece(Piece('Y')) #Yellow
-gb.fields[18].addPiece(Piece('Y')) #Yellow
-gb.fields[ 9].addPiece(Piece('O')) #Orange
-gb.fields[23].addPiece(Piece('O')) #Orange
 
-# red line for visual:
-gb.fields[ 5].addLine('R') #Red
-gb.fields[10].addLine('R') #Red
-gb.fields[15].addLine('R') #Red
-gb.fields[20].addLine('R') #Red
-#redpath = Path('R', (1,1), ['S','S','S','S','E'])
-redline = Line('R', [(1,1), (1, 2), (1, 3), (1, 4), (1, 5), (2, 5)])
-greenline = Line('G', [(3,1), (2, 1), (2, 2), (2, 3), (2, 4)])
+# add pieces
+gb.addPiece(1, 1, 'R')
+gb.addPiece(2, 5, 'R')
+gb.addPiece(3, 1, 'G')
+gb.addPiece(2, 4, 'G')
+gb.addPiece(3, 2, 'B')
+gb.addPiece(3, 5, 'B')
+gb.addPiece(5, 1, 'Y')
+gb.addPiece(4, 4, 'Y')
+gb.addPiece(5, 2, 'O')
+gb.addPiece(4, 5, 'O')
 
-# Green line for visual
-gb.fields[ 1].addLine('G') #Green
-gb.fields[ 6].addLine('G') #Green
-gb.fields[11].addLine('G') #Green
+# add lines
+gb.addLine(Line('R', [(1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (2, 5)]))
+gb.addLine(Line('G', [(3, 1), (2, 1), (2, 2), (2, 3), (2, 4)]))
+# TODO: solve this tricky situation - skips intermediate cells...
+gb.addLine(Line('B', [(3, 2), (3, 5)]))
+gb.addLine(Line('Y', [(5, 1), (4, 1), (4, 2), (4, 3), (4, 4)]))
+gb.addLine(Line('O', [(5, 2), (5, 3), (5, 4), (5, 5), (4, 5)]))
 
 
 # create the display window
@@ -145,9 +131,8 @@ pg.display.set_caption("FlowFree %d ☓ %d" % (COLS, ROWS))
 win.fill(GRAY)
 
 drawGrid(win, COLS, ROWS)
-drawPieces(gb)
-drawLine(redline)
-drawLine(greenline)
+drawContents(gb)
+
 
 # now save the drawing
 # can save as .bmp .tga .png or .jpg

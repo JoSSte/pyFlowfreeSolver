@@ -6,27 +6,17 @@ class Piece:
         self.color = color
         Piece.pieceCount += 1
 
+
 class Line:
     path = []
     color = ''
+
     def __init__(self, color, coords) -> None:
         self.path = coords
         self.color = color
-    
+
     def addCoordinate(self, coord):
         self.path.append(coord)
-
-#class Path:
-#    start
-#    directions = []
-#    color = ''
-#    def __init__(self, color, start, directions) -> None:
-#        self.directions = directions
-#        self.start = start
-#        self.color = color
-#    
-#    def addCoordinate(self, coord: Coordinate):
-#        self.path.append(coord)
 
 
 class Field:
@@ -77,7 +67,14 @@ class Field:
     def getColumn(self):
         return self.column
 
+    def getX(self):
+        return self.column
+
+    def getY(self):
+        return self.row
+
     # Set Neighbours
+
     def setNorth(self, field):
         self.north = field
         if field.getSouth() is None:
@@ -143,6 +140,7 @@ class GameBoard:
         self.columns = cols
         self.rows = rows
         self.fields = []
+        self.lines = []
 
         # Create fields
         for row in range(1, self.rows+1):
@@ -162,3 +160,28 @@ class GameBoard:
     def printBoard(self):
         for f in self.fields:
             f.displayField()
+
+    def coords2Offset(self, x: int, y: int) -> int:
+        return (y-1) * self.rows + (x - 1)
+
+    def getField(self, x:int, y:int)-> Field:
+        return self.fields[self.coords2Offset(x,y)]
+
+    def addPiece(self, x: int, y: int, colour):
+        f = self.fields[self.coords2Offset(x, y)]
+        if(not f.isOccupied()):
+            f.addPiece(Piece(colour))
+        else:
+            raise Exception("Cell %d,%d is already ocuppied" % (x, y))
+
+    def addLine(self, l: Line):
+        for segment in l.path:
+            f = self.getField(segment[0], segment[1])
+            if(f.isOccupied()):
+                # occupied. OK if piece and is same colour
+                if(f.piece is not None):
+                    if(not f.piece.color == l.color):
+                        print("%d, %d is occupied already" % (segment[0], segment[1]))
+                        raise Exception("Cell %d,%d is already occupied" % (segment[0], segment[1]))
+        # if we get to here, all cells in the line are free
+        self.lines.append(l)
