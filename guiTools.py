@@ -2,13 +2,15 @@ from gameboard import Piece, Field, GameBoard, Line
 import pygame as pg
 
 
-# pygame uses (r, g, b) color tuples
+# pygame uses (r, g, b) colour tuples
 class C:
     SILVER = (200, 200, 200)
     GRAY = (40, 40, 40)
+    DARKGRAY = (20, 20, 20)
     WHITE = (255, 255, 255)
     BLACK = (0, 0, 0)
 
+    #Colours from ingame
     BLUE = (12, 41, 254)
     RED = (255, 0, 0)
     GREEN = (0, 141, 0)
@@ -69,7 +71,7 @@ def drawGameboard(board, block_size = 40):
     pg.display.set_caption("FlowFree %d ☓ %d" % (board.columns, board.rows))
 
     # default background is black, so make it WHITE
-    win.fill(C.GRAY)
+    win.fill(C.DARKGRAY)
 
     drawGrid(win, board.columns, board.rows)
     drawContents(win, board)
