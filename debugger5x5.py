@@ -6,8 +6,8 @@ displays a pygame window and saves a .png file with the board.
 from gameboard import GameBoard, Line
 from guiTools import C, drawGameboard
 
-ROWS = 5
 COLS = 5
+ROWS = 5
 
 # initialize board
 gb = GameBoard(COLS, ROWS)
