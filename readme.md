@@ -15,7 +15,7 @@ First figure out if we can solve the problem, then detect the layout and problem
 1. [ ] Detect playing field (only rectangles to start with)
 1. [ ] Detect piece placement
 1. [ ] Save screenshot
-1. [ ] Get next playing field
+1. [ ] Get next playing Board
 
 ## Board setup
 
@@ -64,6 +64,19 @@ Conditions that would cause a failure state, ie the game would be unsolvable.
 ### Path solving
 * **Outside to inside.** Finding a piece in the outer cells, and following the border clockwise (CW) or counter-clockwise (CCW)., repeating the method on each colour pair, until solved.  
 This tactic wil most likely work for simple, small boards. In case of having to snake around another this tactic will fail. May be able to be used as a trailbreaker.
+  * CCW pseudo-algorithm
+  ```
+  if No neighbour on side X
+    if we can go Left compared to X (if x = SOUTH, direction (D) = East, D+1 = North)
+      if D unoccupied
+        go D
+      elseif D occupied
+        if D+1 unoccupied
+          go D+1, D
+        else
+          fail
+  
+  ```
 * **Single cell path.** If both pieces share a single cell neighbour, so that filling out that cell will connect them. E.g. diagonals may be a more certain win, verticals or horizontals may not be.
 * **Path finding algorithms** These will find the shortest path, but may not be efficient for finding the first paths in an unsolved board.
   * **A-Star.** Using the [A*](https://en.wikipedia.org/wiki/A*_search_algorithm) algorithm for path finding. [Sample Python Implementation](https://www.simplifiedpython.net/a-star-algorithm-python-tutorial/)
