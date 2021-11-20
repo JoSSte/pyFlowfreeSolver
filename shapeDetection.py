@@ -51,9 +51,6 @@ def detectCircles(image, displayImage = False):
             circles = []
         return circles
 
-def isSquare(n: int):
-    return ( np.sqrt(n) %1) == 0
-
 def detectGrid(image, displayImage = False):
     #the array of squares
     squares = []

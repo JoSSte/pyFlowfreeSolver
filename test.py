@@ -57,6 +57,5 @@ class TestField(unittest.TestCase):
         f2.clearLine()
         self.assertFalse(f2.isOccupied())
 
-
 if __name__ == '__main__':
     unittest.main()
