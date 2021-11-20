@@ -30,7 +30,7 @@ def get_resized_for_display_img(img):
 
 
 # detect circles in the image
-circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 20,
+circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 40,
 param1=50, param2=40, minRadius=55, maxRadius=120)
 # ensure at least some circles were found
 if circles is not None:
