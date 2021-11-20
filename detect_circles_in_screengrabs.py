@@ -1,7 +1,9 @@
-from shapeDetection import detectCircles
+from shapeDetection import detectGrid
 import numpy as np
 import cv2
 
+
+# TODO: move to parameterizzed testcase
 screengrabs =  {
   "filename": "screengrabs/screen_05_05.png",
   "gridsize": {"x":5, "y":5},
@@ -23,10 +25,14 @@ screengrabs =  {
 for i in screengrabs:
   # load the image, clone it for output, and then convert it to grayscale
   image = cv2.imread(i["filename"])
-  print("detecting circles in %s. expecting %d pairs" % (i["filename"], i["expected_pairs"]))
-  circles = detectCircles(image)
-  print("Found %d circles in %s" % (len(circles), i["filename"]))
-  piece_size_guess = 0
-  for idx,(x, y, r) in enumerate(circles):
-    print("%d\tx: %d\ty: %d\tr: %d" % (idx, x, y, r))
+  _, circles, rows, cols = detectGrid(image)
+  print("Detecting circles in %s. Expecting %d circles: Found %d. Expecting %d columns: Found %d. Expecting %d rows: Found %d." % (i["filename"], i["expected_pairs"]*2, len(circles),i["gridsize"]["x"], cols, i["gridsize"]["y"], rows))
+  
+  if i["expected_pairs"]*2 ==  len(circles):
+    print("number of circles match!")
+  if i["gridsize"]["x"] == cols:
+    print("number of columns match!")
+  if i["gridsize"]["y"] == rows:
+    print("number of rows match!")
+
   
