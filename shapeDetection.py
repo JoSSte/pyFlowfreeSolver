@@ -24,7 +24,7 @@ def get_resized_for_display_img(img):
     w, h = int(w), int(h)  # you need int for the cv2.resize
     return cv2.resize(img, (w, h))
 
-#TODO: make limits relative instead of hard-coded
+#TODO: make limits relative to screen size instead of hard-coded
 def detectCircles(image, displayImage = False):
     output = image.copy()
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -51,7 +51,7 @@ def detectCircles(image, displayImage = False):
             circles = []
         return circles
 
-#TODO: make limits relative instead of hard-coded
+#TODO: make limits relative to screen size instead of hard-coded
 def detectGrid(image, displayImage = False):
     #the array of squares
     squares = []
