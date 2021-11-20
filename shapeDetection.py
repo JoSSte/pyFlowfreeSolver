@@ -24,7 +24,7 @@ def get_resized_for_display_img(img):
     w, h = int(w), int(h)  # you need int for the cv2.resize
     return cv2.resize(img, (w, h))
 
-
+#TODO: make limits relative instead of hard-coded
 def detectCircles(image, displayImage = False):
     output = image.copy()
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -51,11 +51,13 @@ def detectCircles(image, displayImage = False):
             circles = []
         return circles
 
+#TODO: make limits relative instead of hard-coded
 def detectGrid(image, displayImage = False):
     #the array of squares
     squares = []
+    #h, w, c = image.shape
+    #minsize = (h*w/3)*2
 
-    #print("detecting grid")
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     blur = cv2.GaussianBlur(gray, (9,9), 0)
     thresh1 = cv2.adaptiveThreshold(blur, 255, 1, 1, 11, 2)
@@ -86,7 +88,7 @@ def detectGrid(image, displayImage = False):
     # blot out the circles
     if (circles is not None):
         for (x,y,r) in circles:
-            cv2.circle(out, (x, y), r+4, (0, 0, 0), -1)
+            cv2.circle(out, (x, y), r+2, (0, 0, 0), -1)
     else:
         print("No circles found!! fatal error!")
     
@@ -104,12 +106,13 @@ def detectGrid(image, displayImage = False):
     #counters to count rows and columns
     numX = 0
     numY = 0
+    gameboard = -1
     for c, ctr in enumerate(contours):
         area = cv2.contourArea(ctr)
         if area > max_area:
             gameboard = c
             #print("found board @ %ctr" % (hierarchy[gameboard, c, 3]))
-        if hierarchy[gameboard, c,3] == 1:
+        if gameboard != -1 and hierarchy[gameboard, c,3] == 1:
             M = cv2.moments(ctr)
             cX = int(M["m10"] / M["m00"])
             cY = int(M["m01"] / M["m00"])
