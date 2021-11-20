@@ -147,3 +147,7 @@ def detectGrid(image, displayImage = False):
         cv2.destroyAllWindows()
     
     return squares, circles, int(numX), int(numY)
+
+#function to take the input from a screengrab and put into the solvable format
+def parseBoard(image, circles, squares, ):
+    print("parseBoard not yet implemented")
