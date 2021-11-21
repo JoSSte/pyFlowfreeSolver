@@ -59,8 +59,8 @@ def detectGrid(image, displayImage = False):
     #minsize = (h*w/3)*2
 
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    blur = cv2.GaussianBlur(gray, (9,9), 0)
-    thresh1 = cv2.adaptiveThreshold(blur, 255, 1, 1, 11, 2)
+    blur1 = cv2.GaussianBlur(gray, (5,5), 0)
+    thresh1 = cv2.adaptiveThreshold(blur1, 255, 1, 1, 11, 2)
 
     contours1, _ = cv2.findContours(thresh1, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     max_area = 0
