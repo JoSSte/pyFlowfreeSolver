@@ -9,6 +9,13 @@ One approach could be to do a modified A* variant which both takes into account 
 
 My first priority is not to be as Pythonic as possible, but to get a feel for the different libraries related to computer vision.  
 
+# Current issues and notes
+* Ads make a lot of noise, and give a lot of extra thresholds 
+  * Quick fix is to just buy the ad-free (which i would prefer), but that requires GAPPS on th3 device, which is not the case on current test device
+  * Even though we are blacking out everything but the playing board, we are still getting contours detected there. Is this a case of similarly named variables?
+* Gradient background gives shadows on some boards which are not easily removed. Current fix is to use a bigger Gaussian blur, but it is my impression that this solution is generating extra contours.  
+
+
 ## Overall TODO list
 First figure out if we can solve the problem, then detect the layout and problem, and draw the solution...
 
@@ -105,10 +112,3 @@ This tactic wil most likely work for simple, small boards. In case of having to 
 ### Path certainty score
 * Any path creating a failure condition with no other paths drawn should be considered unusable - negative score.
 * A single cell path where there is a dead end e.g. in the corner of a board should be a high scorer.
-
-
-# Current issues and notes
-* Ads make a lot of noise, and give a lot of extra thresholds 
-  * Quick fix is to just buy the ad-free (which i would prefer), but that requires GAPPS on th3 device, which is not the case on current test device
-  * Even though we are blacking out everything but the playing board, we are still getting contours detected there. Is this a case of similarly named variables?
-* Gradient background gives shadows on some boards which are not easily removed. Current fix is to use a bigger Gaussian blur, but it is my impression that this solution is generating extra contours.
