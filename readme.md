@@ -79,11 +79,13 @@ Conditions that would cause a failure state, ie the game would be unsolvable.
 
 __*TODO:*__ screenshots for each of these conditions.
 
-* **Orphan unoccupied cell.** Cell where all neighbours are occupied, but the cell itself isn't.
+* **Unreacvhable unoccupied cell.** Cell where all neighbours are occupied, but the cell itself isn't.
+![unreachable](screengrabs/failures/2_orphans.jpg)
+![unreachable](screengrabs/failures/corner_orphan.jpg)
 * **Single cell kink.** Line creating a cell with only one free neighbour, all other (max 3) neighbouring cells occupied.
 * **Orphaned Piece.** Pieces of the same colour on opposite sides of the line.
-* **Invalid Circumnavigation.** Piece with a single cell on each side after passing a line. This would give orphan unoccupied cells on botth sides of a piece.
-* **Corner with double line leading to it.** This would only allow a line to double back on itself, which has not (as far as I have seen) been part of a valid solution. If there are no pieces in a corner, then the number of lines will most likely be more than one.
+* **Invalid Circumnavigation.** Piece with a single cell on each side after passing a line. This would give orphan unoccupied cells on both sides of a piece.
+* **Corner with double line leading to it.** This would only allow a line to double back on itself, which has not (as far as I have seen) been part of a valid solution. If there are no pieces in a corner, then the number of lines will most likely be more than one. ![corner](screengrabs/failures/corner_double_row.jpg)
 * **Bottleneck.** A situation where the remaining cells are split into two or more areas, where the spaces available to pass from one side to the other is smaller than the number of lines we need to pass through the barrier.
 
 ## Path solving tactics
