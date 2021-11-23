@@ -40,6 +40,14 @@ class Field:
         self.west = None
         self.east = None
 
+        # coordinates of square in FlowFree
+        self.x = 0
+        self.y = 0
+    
+    def addCoordinate(self, x, y):
+        self.x = x
+        self.y = y
+
     def addPiece(self, piece):
         # no check for line presence since this is not drawn after lines...
         self.occupied = True

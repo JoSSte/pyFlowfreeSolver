@@ -1,6 +1,9 @@
 from win32api import GetSystemMetrics
 import numpy as np
+import math
 import cv2
+
+from gameboard import GameBoard
 
 # the maximum width/height of a table in cell count
 MAX_TABLE_DIMENSION = 15
@@ -50,6 +53,14 @@ def detectCircles(image, displayImage = False):
         if(circles is None):
             circles = []
         return circles
+
+def roundx(num: int)-> int:
+    return int(round(num/20))*20
+
+def uniquelist(llist, minDist = 0):
+    llist = list(set(llist))
+    llist.sort()
+    return llist
 
 #TODO: make limits relative to screen size instead of hard-coded
 def detectGrid(image, displayImage = False):
@@ -107,6 +118,9 @@ def detectGrid(image, displayImage = False):
     numX = 0
     numY = 0
     gameboard = -1
+    # lists to hold values for columns and rows to convert to gameboard grid coordinates
+    column_coords = []
+    row_coords = []
     for c, ctr in enumerate(contours):
         area = cv2.contourArea(ctr)
         if area > max_area:
@@ -128,18 +142,28 @@ def detectGrid(image, displayImage = False):
                     numX = numX + 1
                 if np.abs(cY-firstY) < 5:
                     numY = numY + 1
-            squares.append((cX,cY))
-            numSquares = numSquares+1
+            # save image coordinates, and empty board grid coordinates
+            squares.append(((cX, cY), (0, 0)))
+            column_coords.append(roundx(cX))
+            row_coords.append(roundx(cY))
+            numSquares = numSquares + 1
             if displayImage and area > minarea/2:
                 cv2.drawContours(image, contours, c, (0, 255, 0), 3)
     
-    #print("Dimensions: x: %d y:%d" % (numX, numY))
+    # Make sure that lists of coordinates are unique, and listas are sorted
+    column_coords = uniquelist(column_coords)
+    row_coords = uniquelist(row_coords)
+    for sq_idx,((a,b),(_,_)) in enumerate(squares):
+        squares[sq_idx] = ((a,b),(1 + column_coords.index(roundx(a)), 1 + row_coords.index(roundx(b))))
+
+    print("Dimensions: x: %d y:%d" % (numX, numY))
+    print(row_coords, column_coords)
 
     if displayImage:    
-        cv2.imshow("thresholds", get_resized_for_display_img(thresh))
+        #cv2.imshow("thresholds", get_resized_for_display_img(thresh))
         #cv2.imshow("mask", mask)
-        cv2.imshow("New image", get_resized_for_display_img(out))
-        cv2.imshow("Anded Color", get_resized_for_display_img(bit_and))
+        #cv2.imshow("New image", get_resized_for_display_img(out))
+        #cv2.imshow("Anded Color", get_resized_for_display_img(bit_and))
         #cv2.imshow("blur1", blur)
         #cv2.imshow("thresh1", thresh)
         cv2.imshow("Final Image", get_resized_for_display_img(image))
@@ -148,6 +172,27 @@ def detectGrid(image, displayImage = False):
     
     return squares, circles, int(numX), int(numY)
 
-#function to take the input from a screengrab and put into the solvable format
-def parseBoard(image, circles, squares, ):
-    print("parseBoard not yet implemented")
+#function to take the input from a screengrab and put into the solvable Gameboard format
+def parseBoard(image, rows, cols, circles, squares)-> GameBoard:
+    gb = GameBoard(cols, rows)
+    for cidx, (x,y,r) in enumerate(circles):
+        #Detect color
+        color = image[y,x]
+
+        # Detect Cell
+        for ((sx,sy),(bx,by)) in squares:
+            distance = np.sqrt((sx-x)**2 + (sy-y)**2)
+            
+            #print("checking #%d %d, %d in cell %d, %d (%d, %d)\t[distance: %d]\twith color %s" % (cidx, x,y, bx,by, sx,sy, distance, color))
+            # If center of square withing radius of circle form circle coordinate, we are in the same cell...
+            if(distance <= r):
+                print("Adding #%d %d, %d in cell %d, %d (%d, %d)\t[distance: %d]\twith color %s" % (cidx, x,y, bx,by, sx,sy, distance, color))
+                # Add it to the gameboard
+                try:
+                    gb.addPiece(bx, by, color)
+                    # We found the cell, no need to check other cells
+                    break
+                except Exception as a:
+                    print("Cell [%d,%d] occupied (adding %s) %s"% (bx, by, color, a))
+    #print(circles)
+    return gb
