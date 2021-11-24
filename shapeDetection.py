@@ -177,7 +177,7 @@ def parseBoard(image, rows, cols, circles, squares)-> GameBoard:
     gb = GameBoard(cols, rows)
     for cidx, (x,y,r) in enumerate(circles):
         #Detect color
-        color = image[y,x]
+        color = (image[y,x][2], image[y,x][1], image[y,x][0])
 
         # Detect Cell
         for ((sx,sy),(bx,by)) in squares:
@@ -186,7 +186,7 @@ def parseBoard(image, rows, cols, circles, squares)-> GameBoard:
             #print("checking #%d %d, %d in cell %d, %d (%d, %d)\t[distance: %d]\twith color %s" % (cidx, x,y, bx,by, sx,sy, distance, color))
             # If center of square withing radius of circle form circle coordinate, we are in the same cell...
             if(distance <= r):
-                print("Adding #%d %d, %d in cell %d, %d (%d, %d)\t[distance: %d]\twith color %s" % (cidx, x,y, bx,by, sx,sy, distance, color))
+                #print("Adding #%d %d, %d in cell %d, %d (%d, %d)\t[distance: %d]\twith color %s" % (cidx, x,y, bx,by, sx,sy, distance, color))
                 # Add it to the gameboard
                 try:
                     gb.addPiece(bx, by, color)
