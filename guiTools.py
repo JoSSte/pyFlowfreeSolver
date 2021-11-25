@@ -1,6 +1,10 @@
 from gameboard import Piece, Field, GameBoard, Line
 import pygame as pg
 
+"""
+Tools to display a gameboard.
+Not needed for solving, but useful to display the internal gameboard
+"""
 
 # pygame uses (r, g, b) colour tuples
 class C:

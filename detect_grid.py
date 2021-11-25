@@ -17,4 +17,7 @@ board = parseBoard(image, rows, cols, circles, squares)
 print ("%d rows\t%d columns\t%d squares" % (rows, cols, len(squares)))
 print ("%d circles" % ( len(circles)))
 
+#for f in board.fields:
+#    if f.piece is not None:
+#        print(f.piece.color)
 drawGameboard(board)

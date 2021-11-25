@@ -156,8 +156,8 @@ def detectGrid(image, displayImage = False):
     for sq_idx,((a,b),(_,_)) in enumerate(squares):
         squares[sq_idx] = ((a,b),(1 + column_coords.index(roundx(a)), 1 + row_coords.index(roundx(b))))
 
-    print("Dimensions: x: %d y:%d" % (numX, numY))
-    print(row_coords, column_coords)
+    #print("Dimensions: x: %d y:%d" % (numX, numY))
+    #print(row_coords, column_coords)
 
     if displayImage:    
         #cv2.imshow("thresholds", get_resized_for_display_img(thresh))
