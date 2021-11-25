@@ -4,10 +4,12 @@ class Piece:
 
     def __init__(self, color):
         self.color = color
+        self.column = 0
+        self.row = 0
         Piece.pieceCount += 1
     
     def __str__(self):
-     return "(%d,%d,%d)" % (self.color[0], self.color[1], self.color[2])
+     return "[%d,%d] (%d,%d,%d)" % (self.column, self.row, self.color[0], self.color[1], self.color[2])
 
 
 
@@ -59,6 +61,8 @@ class Field:
         # no check for line presence since this is not drawn after lines...
         self.occupied = True
         self.piece = piece
+        self.piece.row = self.row
+        self.piece.column = self.column
 
     def addLine(self, colour):
         if(self.occupied):
