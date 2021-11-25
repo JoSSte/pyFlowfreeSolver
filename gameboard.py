@@ -5,6 +5,10 @@ class Piece:
     def __init__(self, color):
         self.color = color
         Piece.pieceCount += 1
+    
+    def __str__(self):
+     return "(%d,%d,%d)" % (self.color[0], self.color[1], self.color[2])
+
 
 
 class Line:
@@ -43,6 +47,9 @@ class Field:
         # coordinates of square in FlowFree
         self.x = 0
         self.y = 0
+    
+    def __str__(self):
+     return "#%d\tR:%d C:%d\tPiece:%s" % (self.number,self.row, self.column, self.piece)
     
     def addCoordinate(self, x, y):
         self.x = x
