@@ -18,14 +18,9 @@ board = parseBoard(image, rows, cols, circles, squares)
 print("%d rows\t%d columns\t%d squares" % (rows, cols, len(squares)))
 print("%d circles" % (len(circles)))
 
-# for f in board.fields:
-#    if f.piece is not None:
-#        print(f.piece.color)
-
-
 def doneColor(list, target):
     for i in list:
-        if i[0] == target[0] and i[1] == target[1] and i[2] == target[2]:
+        if i== target:
             return False
     return True
 
@@ -36,19 +31,19 @@ for f in board.fields:
         pieces.append(f.piece)
 colors = []
 sets =[]
-for idx, p in enumerate(pieces):
-    #p_curr = p
-    #pieces.remove(p)
-    print("__%d__: (%d,%d,%d)" %(idx, p.color[0], p.color[1], p.color[2]))
-    if doneColor(colors, p.color):
+for idx, p1 in enumerate(pieces):
+    #p_curr = p1
+    #pieces.remove(p1)
+    print("__%d__: (%d,%d,%d)" %(idx, p1.color[0], p1.color[1], p1.color[2]))
+    if doneColor(colors, p1.color):
         for p2 in pieces:
-            if (p2.color[0] == p.color[0] and p2.color[1] == p.color[1] and p2.color[2] == p.color[2]) and (p2.row != p.row and p2.column != p.column):
-                sets.append(FieldPair(p, p2))
+            if p1.color == p2.color and not(p2.row == p1.row and p2.column == p1.column):
+                sets.append(FieldPair(p1, p2))
                 #pieces.remove(p2)
-                colors.append(p.color)
+                colors.append(p1.color)
                 break
             else: 
-                print("No match between : (%d,%d,%d) and (%d,%d,%d)" %( p.color[0], p.color[1], p.color[2], p2.color[0], p2.color[1], p2.color[2]))
+                print("No match between : (%d,%d,%d) and (%d,%d,%d)" %( p1.color[0], p1.color[1], p1.color[2], p2.color[0], p2.color[1], p2.color[2]))
     else: 
         print("done")
 
