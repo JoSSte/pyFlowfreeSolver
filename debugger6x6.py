@@ -5,6 +5,7 @@ displays a pygame window and saves a .png file with the board.
 
 from gameboard import GameBoard, Line
 from guiTools import C, drawGameboard
+from solverTools import solve_board
 
 COLS = 6
 ROWS = 6
@@ -24,6 +25,7 @@ gb.addPiece(6, 4, C.YELLOW)
 gb.addPiece(6, 1, C.ORANGE)
 gb.addPiece(4, 5, C.ORANGE)
 
+solve_board(gb)
 
 if(gb.isSolved()):
     print("HURRAH! WE SOLVED IT!")

@@ -210,13 +210,35 @@ class GameBoard:
         self.lines.append(l)
 
     def isSolved(self)->bool:
-        solved = True
-        if(len(self.fields)/2 != len(self.lines)):
-            #print("Number of piece-pairs does not match number of lines. Not solved...")
-            solved = False
         for f in self.fields:
-            if (not f.isOccupied()):
-                #print("%d, %d is unoccupied" % (f.getX(), f.getY()))
-                solved = False
+            if f.piece is None and f.line is None:
+                return False
 
-        return solved
+        piece_pairs = {}
+        for f in self.fields:
+            if f.piece is not None:
+                piece_pairs.setdefault(f.piece.color, []).append((f.column, f.row))
+
+        for color, positions in piece_pairs.items():
+            if len(positions) != 2:
+                return False
+
+            start, end = positions
+            queue = [start]
+            visited = {start}
+            line_cells = {(field.column, field.row) for field in self.fields if field.line == color}
+            line_cells.update(positions)
+
+            while queue:
+                current = queue.pop()
+                for next_cell in ((current[0] + 1, current[1]), (current[0] - 1, current[1]), (current[0], current[1] + 1), (current[0], current[1] - 1)):
+                    if next_cell in visited:
+                        continue
+                    if 1 <= next_cell[0] <= self.columns and 1 <= next_cell[1] <= self.rows and next_cell in line_cells:
+                        visited.add(next_cell)
+                        queue.append(next_cell)
+
+            if end not in visited:
+                return False
+
+        return True
