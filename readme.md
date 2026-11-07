@@ -24,20 +24,20 @@ First figure out if we can solve the problem, then detect the layout and problem
 1. [x] Set up game board
 1. [ ] Solve pathing
    * [ ] Create layout for field
-   * [ ] Connect Colours
+   * [x] Connect Colours
    * [ ] Find orphans
-   * [ ] Solve paths
+   * [x] Solve paths
    * [ ] Advanced pathfinding/optimisations
 1. [x] Draw solution
 1. [x] Detect playing field (only rectangles to start with)
 1. [x] Detect piece placement
 1. [x] Save picture of solution
-1. [ ] Draw solution on device
-1. [ ] Save screenshot of completed level from device
-1. [ ] Get next level
-   * [ ] Detect ad (currently running on device without GAPPS so can't remove ads)
-   * [ ] Decline ad
-   * [ ] Get next pack when pack completed (you wish)
+1. [ ] (postponed) Draw solution on device
+1. [ ] (postponed) Save screenshot of completed level from device
+1. [ ] (postponed) Get next level
+   * [ ] (postponed) Detect ad (currently running on device without GAPPS so can't remove ads)
+   * [ ] (postponed) Decline ad
+   * [ ] (postponed) Get next pack when pack completed (you wish)
 
 ## Board setup
 

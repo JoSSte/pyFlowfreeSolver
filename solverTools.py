@@ -95,6 +95,47 @@ def _candidate_paths(board: GameBoard, color, start, end, reserved, extra_steps=
     return results
 
 
+def _straightness_key(path):
+    runs = []
+    previous_direction = None
+    run_length = 0
+    for current, following in zip(path, path[1:]):
+        direction = (following[0] - current[0], following[1] - current[1])
+        if direction == previous_direction:
+            run_length += 1
+        else:
+            if run_length:
+                runs.append(run_length)
+            previous_direction = direction
+            run_length = 1
+    if run_length:
+        runs.append(run_length)
+    return max(runs, default=0), sum(run * run for run in runs), -len(runs)
+
+
+def _order_candidate_paths(paths):
+    if len(paths) < 2:
+        return list(paths)
+
+    remaining = list(paths)
+    shortest_index = min(
+        range(len(remaining)),
+        key=lambda index: (len(remaining[index]), tuple(-score for score in _straightness_key(remaining[index]))),
+    )
+    ordered = [remaining.pop(shortest_index)]
+
+    if remaining:
+        straightest_index = max(
+            range(len(remaining)),
+            key=lambda index: (_straightness_key(remaining[index]), -len(remaining[index])),
+        )
+        ordered.append(remaining.pop(straightest_index))
+
+    remaining.sort(key=lambda path: (len(path), tuple(-score for score in _straightness_key(path))))
+    ordered.extend(remaining)
+    return ordered
+
+
 def _reachable_cells(board, start, allowed_cells):
     reachable = {start}
     queue = deque([start])
@@ -307,16 +348,6 @@ def _diagonal_quick_paths(board, start, end, reserved):
     return paths
 
 
-def _axis_segment(start, end):
-    if start[0] == end[0]:
-        step = 1 if end[1] > start[1] else -1
-        return [(start[0], row) for row in range(start[1], end[1] + step, step)]
-    if start[1] == end[1]:
-        step = 1 if end[0] > start[0] else -1
-        return [(column, start[1]) for column in range(start[0], end[0] + step, step)]
-    return []
-
-
 def _path_is_available(board, path, endpoints, reserved):
     for cell in path:
         if cell in endpoints:
@@ -331,25 +362,25 @@ def _path_is_available(board, path, endpoints, reserved):
 
 
 def _edge_route_paths(board, start, end, reserved):
+    boundary = (
+        [(column, 1) for column in range(1, board.columns + 1)]
+        + [(board.columns, row) for row in range(2, board.rows + 1)]
+        + [(column, board.rows) for column in range(board.columns - 1, 0, -1)]
+        + [(1, row) for row in range(board.rows - 1, 1, -1)]
+    )
+    if start not in boundary or end not in boundary:
+        return []
+
+    start_index = boundary.index(start)
+    end_index = boundary.index(end)
     routes = []
-    if {start[1], end[1]} == {1, board.rows}:
-        for side_column in (1, board.columns):
-            first_corner = (side_column, start[1])
-            second_corner = (side_column, end[1])
-            routes.append(
-                _axis_segment(start, first_corner)
-                + _axis_segment(first_corner, second_corner)[1:]
-                + _axis_segment(second_corner, end)[1:]
-            )
-    if {start[0], end[0]} == {1, board.columns}:
-        for side_row in (1, board.rows):
-            first_corner = (start[0], side_row)
-            second_corner = (end[0], side_row)
-            routes.append(
-                _axis_segment(start, first_corner)
-                + _axis_segment(first_corner, second_corner)[1:]
-                + _axis_segment(second_corner, end)[1:]
-            )
+    for direction in (1, -1):
+        path = [start]
+        index = start_index
+        while index != end_index:
+            index = (index + direction) % len(boundary)
+            path.append(boundary[index])
+        routes.append(path)
 
     endpoints = {start, end}
     available_routes = []
@@ -361,7 +392,7 @@ def _edge_route_paths(board, start, end, reserved):
         seen_routes.add(path_key)
         if _path_is_available(board, path, endpoints, reserved):
             available_routes.append(path)
-    return available_routes
+    return sorted(available_routes, key=len)
 
 
 def _same_axis_short_paths(board, start, end, reserved):
@@ -436,7 +467,7 @@ def _select_color(board, color_pairs, colors_left, used_cells, max_extra_steps):
         if best_paths is None or len(paths) < len(best_paths):
             best_color = color
             best_paths = paths
-    return best_color, best_paths
+    return best_color, _order_candidate_paths(best_paths)
 
 
 def _report_event(debug, on_update, board, debug_message, gui_message):

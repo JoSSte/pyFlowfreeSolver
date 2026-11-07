@@ -4,6 +4,7 @@ from gameboard import GameBoard, Line
 from guiTools import C
 from solverTools import (
     _candidate_paths,
+    _order_candidate_paths,
     _partial_board_failure,
     _priority_moves,
     _same_axis_short_paths,
@@ -226,6 +227,41 @@ class SolverTests(unittest.TestCase):
         paths = _same_axis_short_paths(board, (2, 3), (4, 3), set())
 
         self.assertEqual([len(path) for path in paths], [3, 5, 5])
+
+    def test_candidate_order_tries_shortest_then_longest_straights(self):
+        middle_route = [(1, 1), (1, 2), (1, 3), (1, 4), (2, 4), (3, 4), (3, 3)]
+        long_straight_route = [
+            (1, 1), (1, 2), (1, 3), (1, 4), (1, 5),
+            (2, 5), (3, 5), (3, 4), (3, 3),
+        ]
+        shortest_route = [(1, 1), (2, 1), (3, 1), (3, 2), (3, 3)]
+
+        ordered = _order_candidate_paths([middle_route, long_straight_route, shortest_route])
+
+        self.assertEqual(ordered[0], shortest_route)
+        self.assertEqual(ordered[1], long_straight_route)
+
+    def test_brown_uses_long_perimeter_when_corner_route_is_blocked(self):
+        board = GameBoard(10, 10)
+        board.addPiece(10, 10, C.RED)
+        board.addPiece(10, 9, C.BLUE)
+        board.addPiece(2, 10, C.BROWN)
+        board.addPiece(10, 8, C.BROWN)
+        board.addPiece(6, 6, C.PINK)
+        board.addPiece(5, 7, C.PINK)
+
+        color_pairs = {
+            C.PINK: [(6, 6), (5, 7)],
+            C.BROWN: [(2, 10), (10, 8)],
+        }
+        moves = _priority_moves(board, color_pairs, [C.PINK, C.BROWN], set())
+        brown_paths = [path for color, path in moves if color == C.BROWN]
+
+        self.assertEqual(moves[0][0], C.PINK)
+        self.assertEqual(len(brown_paths), 1)
+        self.assertEqual(len(brown_paths[0]), 27)
+        self.assertNotIn((10, 10), brown_paths[0])
+        self.assertNotIn((10, 9), brown_paths[0])
 
 
 if __name__ == "__main__":
