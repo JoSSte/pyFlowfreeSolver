@@ -7,11 +7,12 @@ import argparse
 import time
 
 from gameboard import GameBoard, Line
-from guiTools import C, drawGameboard
+from guiTools import C, LiveGameboard, drawGameboard
 from solverTools import solve_board
 
 parser = argparse.ArgumentParser(description="Solve the 6x6 Flow Free debug board.")
 parser.add_argument("--debug", action="store_true", help="Display connection and disconnection debug output.")
+parser.add_argument("--gui", action="store_true", help="Show the solver's progress in a live window.")
 args = parser.parse_args()
 
 COLS = 6
@@ -39,7 +40,8 @@ start = time.process_time_ns()
 
 
 print("Starting solve")
-solve_board(gb, debug=args.debug)
+live_gui = LiveGameboard(gb) if args.gui else None
+solve_board(gb, debug=args.debug, on_update=live_gui.update if live_gui else None)
 end = time.process_time_ns()
 
 if(gb.isSolved()):
@@ -49,5 +51,7 @@ else:
 
 print("Time taken: " + str(end - start) + " ns")
 
-
-drawGameboard(gb)
+if live_gui:
+    live_gui.finish(gb, gb.isSolved())
+else:
+    drawGameboard(gb)

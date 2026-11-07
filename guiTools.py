@@ -65,6 +65,56 @@ def drawGrid(screen, w, h):
             rect = pg.Rect(x, y, BLOCK_SIZE, BLOCK_SIZE)
             pg.draw.rect(screen, C.SILVER, rect, 1)
 
+
+class LiveGameboard:
+    def __init__(self, board, block_size=60, update_delay=80):
+        global BLOCK_SIZE
+        pg.init()
+        BLOCK_SIZE = block_size
+        self.board = board
+        self.update_delay = update_delay
+        self.width = board.columns * block_size
+        self.height = board.rows * block_size
+        self.screen = pg.display.set_mode((self.width, self.height + 32))
+        pg.display.set_caption("FlowFree %d x %d - solving" % (board.columns, board.rows))
+        self.font = pg.font.Font(None, 22)
+        self._draw("Preparing solve")
+
+    def _process_events(self):
+        for event in pg.event.get():
+            if event.type == pg.QUIT or (event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE):
+                pg.quit()
+                raise SystemExit
+
+    def _draw(self, message):
+        self.screen.fill(C.DARKGRAY)
+        drawGrid(self.screen, self.board.columns, self.board.rows)
+        drawContents(self.screen, self.board)
+        label = self.font.render(message, True, C.WHITE)
+        self.screen.blit(label, (8, self.height + 7))
+        pg.display.flip()
+        self._process_events()
+
+    def update(self, board, message):
+        self.board = board
+        self._draw(message)
+        if self.update_delay:
+            pg.time.delay(self.update_delay)
+
+    def finish(self, board, solved):
+        self.board = board
+        message = "Solved - close window or press Esc" if solved else "No solution - close window or press Esc"
+        self._draw(message)
+        filename = "output/FlowFree_%d☓%d.png" % (board.columns, board.rows)
+        image = self.screen.subsurface((0, 0, self.width, self.height)).copy()
+        pg.image.save(image, filename)
+        print("file {} has been saved".format(filename))
+
+        while True:
+            self._process_events()
+            pg.time.wait(50)
+
+
 def drawGameboard(board, block_size = 40):
     global BLOCK_SIZE
     BLOCK_SIZE = block_size

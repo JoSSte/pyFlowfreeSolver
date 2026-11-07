@@ -2,7 +2,7 @@ import unittest
 
 from gameboard import GameBoard, Line
 from guiTools import C
-from solverTools import solve_board
+from solverTools import _candidate_paths, _partial_board_failure, solve_board
 
 
 def build_5x6_board():
@@ -55,24 +55,139 @@ def build_5x5_board():
     return board
 
 
+def build_8x8_quickwins_board():
+    board = GameBoard(8, 8)
+    color_pairs = {
+        C.RED: [(5, 1), (2, 8)],
+        C.GREEN: [(7, 2), (5, 3)],
+        C.BLUE: [(5, 4), (5, 6)],
+        C.YELLOW: [(8, 2), (6, 3)],
+        C.ORANGE: [(4, 4), (5, 5)],
+        C.CYAN: [(5, 2), (8, 3)],
+    }
+    for color, positions in color_pairs.items():
+        for x, y in positions:
+            board.addPiece(x, y, color)
+
+    paths = [
+        (C.RED, [(5, 1), (4, 1), (3, 1), (2, 1), (1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7), (1, 8), (2, 8)]),
+        (C.YELLOW, [(8, 2), (8, 1), (7, 1), (6, 1), (6, 2), (6, 3)]),
+        (C.GREEN, [(7, 2), (7, 3), (7, 4), (7, 5), (7, 6), (7, 7), (6, 7), (5, 7), (4, 7), (4, 6), (3, 6), (3, 5), (3, 4), (3, 3), (4, 3), (5, 3)]),
+    ]
+    for color, path in paths:
+        board.addLine(Line(color, path))
+    return board
+
+
 class SolverTests(unittest.TestCase):
+    def test_partial_board_rejects_separated_color_mates(self):
+        board = GameBoard(3, 3)
+        board.addPiece(1, 2, C.RED)
+        board.addPiece(3, 2, C.RED)
+        board.addLine(Line(C.BLUE, [(2, 1), (2, 2), (2, 3)]))
+
+        failure = _partial_board_failure(board, {C.RED: [(1, 2), (3, 2)]}, [C.RED])
+
+        self.assertIn("RED endpoints are disconnected", failure)
+
+    def test_partial_board_rejects_enclosed_orphan_cell(self):
+        board = GameBoard(5, 5)
+        board.addPiece(1, 1, C.RED)
+        board.addPiece(5, 5, C.RED)
+        board.addLine(Line(C.CYAN, [(2, 2), (3, 2), (4, 2), (4, 3), (4, 4), (3, 4), (2, 4), (2, 3)]))
+
+        failure = _partial_board_failure(board, {C.RED: [(1, 1), (5, 5)]}, [C.RED])
+
+        self.assertEqual(failure, "an empty region has no remaining color endpoint")
+
+    def test_partial_board_rejects_single_cell_kink(self):
+        board = GameBoard(3, 3)
+        board.addPiece(3, 1, C.RED)
+        board.addPiece(3, 3, C.RED)
+        board.getField(1, 1).addLine(C.BLUE)
+        board.getField(1, 3).addLine(C.BLUE)
+
+        failure = _partial_board_failure(board, {C.RED: [(3, 1), (3, 3)]}, [C.RED])
+
+        self.assertIn("cannot be part of a complete path", failure)
+
+    def test_partial_board_rejects_orange_route_forcing_red_self_touch(self):
+        board = GameBoard(10, 10)
+        color_pairs = {
+            C.RED: [(1, 6), (7, 5)],
+            C.GREEN: [(1, 2), (7, 4)],
+            C.BLUE: [(1, 7), (4, 4)],
+            C.YELLOW: [(2, 2), (5, 7)],
+            C.ORANGE: [(2, 4), (2, 7)],
+            C.CYAN: [(7, 8), (8, 1)],
+        }
+        for color, positions in color_pairs.items():
+            for x, y in positions:
+                board.addPiece(x, y, color)
+        board.addLine(Line(C.ORANGE, [(2, 4), (3, 4), (3, 5), (3, 6), (3, 7), (2, 7)]))
+
+        failure = _partial_board_failure(
+            board,
+            color_pairs,
+            [C.RED, C.GREEN, C.BLUE, C.YELLOW, C.CYAN],
+        )
+
+        self.assertIn("forced RED path touches itself", failure)
+
+    def test_partial_board_rejects_shared_one_cell_bottleneck(self):
+        board = GameBoard(3, 3)
+        board.addPiece(1, 1, C.RED)
+        board.addPiece(3, 1, C.RED)
+        board.addPiece(1, 3, C.GREEN)
+        board.addPiece(3, 3, C.GREEN)
+        board.getField(2, 1).addLine(C.BLUE)
+        board.getField(2, 3).addLine(C.BLUE)
+        color_pairs = {
+            C.RED: [(1, 1), (3, 1)],
+            C.GREEN: [(1, 3), (3, 3)],
+        }
+
+        failure = _partial_board_failure(board, color_pairs, [C.RED, C.GREEN])
+
+        self.assertIn("bottleneck cell", failure)
+
+    def test_candidate_paths_do_not_touch_themselves(self):
+        board = GameBoard(3, 3)
+        paths = _candidate_paths(board, C.RED, (1, 1), (3, 3), set(), extra_steps=3)
+
+        self.assertTrue(paths)
+        for path in paths:
+            self.assertEqual(len(path), len(set(path)))
+            for index, cell in enumerate(path):
+                for later_cell in path[index + 2:]:
+                    distance = abs(cell[0] - later_cell[0]) + abs(cell[1] - later_cell[1])
+                    self.assertNotEqual(distance, 1)
+
     def test_5x5_board_solves(self):
         board = build_5x5_board()
         solve_board(board)
         self.assertTrue(board.isSolved())
-        self.assertEqual(5, len(board.lines))
+        self.assertEqual(len(board.lines), 5)
 
     def test_5x6_board_solves(self):
         board = build_5x6_board()
         solve_board(board)
         self.assertTrue(board.isSolved())
-        self.assertEqual(4, len(board.lines))
+        self.assertEqual(len(board.lines), 4)
 
     def test_6x6_board_solves(self):
         board = build_6x6_board()
         solve_board(board)
         self.assertTrue(board.isSolved())
-        self.assertEqual(5, len(board.lines))
+        self.assertEqual(len(board.lines), 5)
+
+    def test_8x8_quickwins_board_solves_remaining_colors(self):
+        board = build_8x8_quickwins_board()
+        solve_board(board, max_extra_steps=18)
+        self.assertTrue(board.isSolved())
+        self.assertEqual(len(board.lines), 6)
+        cyan_line = next(line for line in board.lines if line.color == C.CYAN)
+        self.assertEqual(len(cyan_line.path), 21)
 
 
 if __name__ == "__main__":

@@ -42,13 +42,18 @@ gb.addPiece(4, 4, C.ORANGE)
 gb.addPiece(5, 5, C.ORANGE)
 gb.addPiece(5, 2, C.CYAN)
 gb.addPiece(8, 3, C.CYAN)
+
+#gb.addLine(Line(C.RED, [(5, 1), (4, 1), (3, 1), (2, 1), (1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7), (1, 8), (2, 8)]))
+#gb.addLine(Line(C.CYAN, [(5, 2), (4, 2), (3, 2), (2, 2), (2, 3), (2, 4), (2, 5), (2, 6), (2, 7), (3, 7), (3, 8), (4, 8), (5, 8), (6, 8), (7, 8), (8, 8), (8, 7), (8, 6), (8, 5), (8, 4), (8, 3)]))
+#gb.addLine(Line(C.YELLOW, [(8, 2), (8, 1), (7, 1), (6, 1), (6, 2), (6, 3)]))
+#gb.addLine(Line(C.GREEN, [(7, 2), (7, 3), (7, 4), (7, 5), (7, 6), (7, 7), (6, 7), (5, 7), (4, 7), (4, 6), (3, 6), (3, 5), (3, 4), (3, 3), (4, 3), (5, 3)]))
 start = time.process_time_ns()
 
 
 
 print("Starting solve")
 live_gui = LiveGameboard(gb) if args.gui else None
-solve_board(gb, debug=args.debug, on_update=live_gui.update if live_gui else None)
+solve_board(gb, max_extra_steps=18, debug=args.debug, on_update=live_gui.update if live_gui else None)
 end = time.process_time_ns()
 
 if(gb.isSolved()):
