@@ -2,7 +2,13 @@ import unittest
 
 from gameboard import GameBoard, Line
 from guiTools import C
-from solverTools import _candidate_paths, _partial_board_failure, solve_board
+from solverTools import (
+    _candidate_paths,
+    _partial_board_failure,
+    _priority_moves,
+    _same_axis_short_paths,
+    solve_board,
+)
 
 
 def build_5x6_board():
@@ -188,6 +194,38 @@ class SolverTests(unittest.TestCase):
         self.assertEqual(len(board.lines), 6)
         cyan_line = next(line for line in board.lines if line.color == C.CYAN)
         self.assertEqual(len(cyan_line.path), 21)
+
+    def test_selects_diagonal_one_cell_connection_first(self):
+        color_pairs = {
+            C.RED: [(5, 1), (2, 8)],
+            C.GREEN: [(7, 2), (5, 3)],
+            C.BLUE: [(5, 4), (5, 6)],
+            C.YELLOW: [(8, 2), (6, 3)],
+            C.ORANGE: [(4, 4), (5, 5)],
+            C.CYAN: [(5, 2), (8, 3)],
+        }
+        board = GameBoard(8, 8)
+        for color, positions in color_pairs.items():
+            for x, y in positions:
+                board.addPiece(x, y, color)
+
+        moves = _priority_moves(board, color_pairs, list(color_pairs), set())
+
+        self.assertEqual(moves[0][0], C.ORANGE)
+        self.assertEqual(len(moves[0][1]), 3)
+        red_path = next(path for color, path in moves if color == C.RED)
+        self.assertEqual(
+            red_path,
+            [(5, 1), (4, 1), (3, 1), (2, 1), (1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7), (1, 8), (2, 8)],
+        )
+        blue_path = next(path for color, path in moves if color == C.BLUE)
+        self.assertEqual(blue_path, [(5, 4), (6, 4), (6, 5), (6, 6), (5, 6)])
+
+    def test_same_row_gap_prioritizes_straight_and_two_bend_paths(self):
+        board = GameBoard(5, 5)
+        paths = _same_axis_short_paths(board, (2, 3), (4, 3), set())
+
+        self.assertEqual([len(path) for path in paths], [3, 5, 5])
 
 
 if __name__ == "__main__":

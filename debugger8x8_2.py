@@ -4,7 +4,7 @@ displays a pygame window and saves a .png file with the board.
 
 The following files in the screengrabs folder are of the same level, but captured from Flow Free
   s7_screen_08_08.png
-  s23_screen_08_08_00_unsolved.jpg
+  s23_screen_08_08.jpg
   s23_screen_08_08_01_outside_first.jpg
   s23_screen_08_08_02_01_quickwins_first.jpg
   s23_screen_08_08_02_02_quickwins_first.jpg
@@ -53,7 +53,7 @@ start = time.process_time_ns()
 
 print("Starting solve")
 live_gui = LiveGameboard(gb) if args.gui else None
-solve_board(gb, max_extra_steps=18, debug=args.debug, on_update=live_gui.update if live_gui else None)
+solve_board(gb, max_extra_steps=24, debug=args.debug, on_update=live_gui.update if live_gui else None)
 end = time.process_time_ns()
 
 if(gb.isSolved()):

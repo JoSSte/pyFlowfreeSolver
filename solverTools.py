@@ -295,6 +295,136 @@ def _remove_path_from_board(board: GameBoard, color, path):
             field.occupied = False
 
 
+def _diagonal_quick_paths(board, start, end, reserved):
+    if abs(start[0] - end[0]) != 1 or abs(start[1] - end[1]) != 1:
+        return []
+
+    paths = []
+    for middle in ((start[0], end[1]), (end[0], start[1])):
+        field = board.getField(*middle)
+        if middle not in reserved and field.piece is None and field.line is None:
+            paths.append([start, middle, end])
+    return paths
+
+
+def _axis_segment(start, end):
+    if start[0] == end[0]:
+        step = 1 if end[1] > start[1] else -1
+        return [(start[0], row) for row in range(start[1], end[1] + step, step)]
+    if start[1] == end[1]:
+        step = 1 if end[0] > start[0] else -1
+        return [(column, start[1]) for column in range(start[0], end[0] + step, step)]
+    return []
+
+
+def _path_is_available(board, path, endpoints, reserved):
+    for cell in path:
+        if cell in endpoints:
+            continue
+        x, y = cell
+        if not (1 <= x <= board.columns and 1 <= y <= board.rows):
+            return False
+        field = board.getField(x, y)
+        if cell in reserved or field.piece is not None or field.line is not None:
+            return False
+    return True
+
+
+def _edge_route_paths(board, start, end, reserved):
+    routes = []
+    if {start[1], end[1]} == {1, board.rows}:
+        for side_column in (1, board.columns):
+            first_corner = (side_column, start[1])
+            second_corner = (side_column, end[1])
+            routes.append(
+                _axis_segment(start, first_corner)
+                + _axis_segment(first_corner, second_corner)[1:]
+                + _axis_segment(second_corner, end)[1:]
+            )
+    if {start[0], end[0]} == {1, board.columns}:
+        for side_row in (1, board.rows):
+            first_corner = (start[0], side_row)
+            second_corner = (end[0], side_row)
+            routes.append(
+                _axis_segment(start, first_corner)
+                + _axis_segment(first_corner, second_corner)[1:]
+                + _axis_segment(second_corner, end)[1:]
+            )
+
+    endpoints = {start, end}
+    available_routes = []
+    seen_routes = set()
+    for path in routes:
+        path_key = tuple(path)
+        if path_key in seen_routes:
+            continue
+        seen_routes.add(path_key)
+        if _path_is_available(board, path, endpoints, reserved):
+            available_routes.append(path)
+    return available_routes
+
+
+def _same_axis_short_paths(board, start, end, reserved):
+    if start[0] == end[0] and abs(start[1] - end[1]) == 2:
+        step = 1 if end[1] > start[1] else -1
+        middle = (start[0], start[1] + step)
+        paths = [[start, middle, end]]
+        for side_offset in (-1, 1):
+            side_column = start[0] + side_offset
+            paths.append([
+                start,
+                (side_column, start[1]),
+                (side_column, middle[1]),
+                (side_column, end[1]),
+                end,
+            ])
+    elif start[1] == end[1] and abs(start[0] - end[0]) == 2:
+        step = 1 if end[0] > start[0] else -1
+        middle = (start[0] + step, start[1])
+        paths = [[start, middle, end]]
+        for side_offset in (-1, 1):
+            side_row = start[1] + side_offset
+            paths.append([
+                start,
+                (start[0], side_row),
+                (middle[0], side_row),
+                (end[0], side_row),
+                end,
+            ])
+    else:
+        return []
+
+    endpoints = {start, end}
+    return [
+        path
+        for path in paths
+        if _path_is_available(board, path, endpoints, reserved)
+    ]
+
+
+def _priority_moves(board, color_pairs, colors_left, reserved):
+    moves = []
+    for color in colors_left:
+        start, end = color_pairs[color]
+        moves.extend(
+            (color, path)
+            for path in _diagonal_quick_paths(board, start, end, reserved)
+        )
+    for color in colors_left:
+        start, end = color_pairs[color]
+        moves.extend(
+            (color, path)
+            for path in _edge_route_paths(board, start, end, reserved)
+        )
+    for color in colors_left:
+        start, end = color_pairs[color]
+        moves.extend(
+            (color, path)
+            for path in _same_axis_short_paths(board, start, end, reserved)
+        )
+    return moves
+
+
 def _select_color(board, color_pairs, colors_left, used_cells, max_extra_steps):
     best_color = None
     best_paths = None
@@ -355,10 +485,21 @@ def _search_paths(board, color_pairs, colors_left, used_cells, max_extra_steps, 
     if not colors_left:
         return _partial_board_failure(board, color_pairs, colors_left) is None
 
+    prioritized = defaultdict(set)
+    for color, path in _priority_moves(board, color_pairs, colors_left, used_cells):
+        prioritized[color].add(tuple(path))
+        if _try_candidate(
+            board, color_pairs, colors_left, used_cells, color, path,
+            max_extra_steps, debug, on_update,
+        ):
+            return True
+
     color, paths = _select_color(board, color_pairs, colors_left, used_cells, max_extra_steps)
     if color is None:
         return False
     for path in paths:
+        if tuple(path) in prioritized[color]:
+            continue
         if _try_candidate(
             board, color_pairs, colors_left, used_cells, color, path,
             max_extra_steps, debug, on_update,
