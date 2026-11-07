@@ -138,3 +138,47 @@ This tactic wil most likely work for simple, small boards. In case of having to 
 ##### switch to env
 
 `source venv/bin/activate`
+
+## Tests and screenshot pipeline
+
+Run commands from the project root with the project environment activated and dependencies installed from `requirements.txt`.
+
+### Solver tests
+
+```bash
+python -m unittest -v test_solver
+```
+
+These tests cover the 5x5, 5x6, 6x6, and seeded 8x8 solver boards, as well as route priorities and pruning for orphan regions, disconnected pairs, kinks, forced self-touches, and bottlenecks.
+
+### Detection tests
+
+```bash
+python -m unittest -v test
+```
+
+This runs the board model checks and the existing detection checks against their listed sample images. Detection reports the grid dimensions, cell centers, and colored endpoint circles.
+
+### End-to-end screenshot tests
+
+```bash
+python -m unittest -v test_screengrab_pipeline
+```
+
+The pipeline discovers image files directly under `screengrabs/` (it does not recurse into subfolders), detects the grid and pieces, builds a `GameBoard`, and attempts to solve it. For each image it writes two timestamp-independent PNGs under `output/`:
+
+* `<image-name>_detected.png` shows the detected grid-cell centers and endpoint circles.
+* `<image-name>_solved.png` overlays the solver's paths and reports `SOLVED` or `NOT SOLVED`.
+
+An image is skipped when grid/circle detection is incomplete or detected dots do not form complete color pairs. Its diagnostic images are still saved. A board with valid detected pairs that the solver cannot complete is a test failure; its `NOT SOLVED` image is saved for inspection. This separates detection limitations from solver limitations. The solver's search bound in this test is 10 extra steps for boards up to 6x6 and 18 for larger boards.
+
+### Debugger boards
+
+Debugger scripts live under `debuggers/` and accept `--debug` and `--gui`:
+
+```bash
+python debuggers/debugger10x10.py --debug --gui
+python -m debuggers.debugger8x8_2 --debug --gui
+```
+
+The GUI and static board renderer save timestamped images in the project-level `output/` directory, even when a debugger is launched with `debuggers/` as the working directory.

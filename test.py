@@ -61,11 +61,11 @@ class TestField(unittest.TestCase):
         self.assertFalse(f2.isOccupied())
 
     screengrabs =  {
-      "filename": "screengrabs/s7_screen_05_05.png",
+      "filename": "screengrabs/s7_screen_05_05_1.png",
       "gridsize": {"x":5, "y":5},
       "expected_pairs": 5
     },{
-      "filename": "screengrabs/s7_screen_05_05_2.png",
+      "filename": "screengrabs/s7_screen_05_05_3.png",
       "gridsize": {"x":5, "y":5},
       "expected_pairs": 5
     },{
