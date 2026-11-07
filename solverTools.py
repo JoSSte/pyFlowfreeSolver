@@ -22,17 +22,35 @@ def _color_name(color):
     color_names = {
         (255, 0, 0): "RED",
         (0, 141, 0): "GREEN",
+        (0, 255, 0): "LIME",
         (12, 41, 254): "BLUE",
         (234, 224, 0): "YELLOW",
         (251, 137, 0): "ORANGE",
         (128, 0, 128): "PURPLE",
         (255, 10, 201): "PINK",
         (165, 42, 42): "BROWN",
+        (160, 138, 81): "TAN",
+        (159, 158, 189): "LAVENDER",
+        (255, 255, 255): "WHITE",
         (0, 255, 255): "CYAN",
     }
-    if isinstance(color, tuple):
-        return color_names.get(color, str(color))
-    return str(color)
+    try:
+        rgb = tuple(int(channel) for channel in color)
+    except (TypeError, ValueError):
+        return str(color)
+    if len(rgb) != 3:
+        return str(rgb)
+    if rgb in color_names:
+        return color_names[rgb]
+
+    closest = min(
+        color_names,
+        key=lambda candidate: sum((rgb[index] - candidate[index]) ** 2 for index in range(3)),
+    )
+    distance_squared = sum((rgb[index] - closest[index]) ** 2 for index in range(3))
+    if distance_squared <= 30**2:
+        return color_names[closest]
+    return f"RGB{rgb}"
 
 
 def _neighbors(position, columns, rows):

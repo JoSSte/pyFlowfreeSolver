@@ -34,11 +34,20 @@ def get_resized_for_display_img(img):
     return cv2.resize(img, (w, h))
 
 #TODO: make limits relative to screen size instead of hard-coded
-def detectCircles(image, displayImage = False):
+def detectCircles(image, displayImage=False, minRadius=45, maxRadius=120, minDistance=40, param2=40):
     output = image.copy()
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     # detect circles in the image
-    circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 40, param1=50, param2=40, minRadius=45, maxRadius=120)
+    circles = cv2.HoughCircles(
+        gray,
+        cv2.HOUGH_GRADIENT,
+        1,
+        minDistance,
+        param1=50,
+        param2=param2,
+        minRadius=minRadius,
+        maxRadius=maxRadius,
+    )
     # ensure at least some circles were found
     if circles is not None:
         # convert the (x, y) coordinates and radius of the circles to integers
@@ -68,115 +77,96 @@ def uniquelist(llist, minDist = 0):
     llist.sort()
     return llist
 
-#TODO: make limits relative to screen size instead of hard-coded
-def detectGrid(image, displayImage = False):
-    #the array of squares
-    squares = []
-    #h, w, c = image.shape
-    #minsize = (h*w/3)*2
+def _projection_line_centers(mask, axis):
+    projection = mask.sum(axis=axis).astype(float)
+    if projection.size == 0 or projection.max() == 0:
+        return []
+
+    indices = np.flatnonzero(projection >= projection.max() * 0.6)
+    groups = np.split(indices, np.where(np.diff(indices) > 1)[0] + 1)
+    return [int(round(float(group.mean()))) for group in groups if len(group)]
+
+
+def detectGrid(image, displayImage=False):
+    if image is None or image.size == 0:
+        raise ValueError("detectGrid requires a non-empty image")
 
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    blur1 = cv2.GaussianBlur(gray, (5,5), 0)
-    thresh1 = cv2.adaptiveThreshold(blur1, 255, 1, 1, 11, 2)
+    blur = cv2.GaussianBlur(gray, (5, 5), 0)
+    threshold = cv2.adaptiveThreshold(blur, 255, 1, 1, 11, 2)
+    contours, _ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    if not contours:
+        return [], None, 0, 0
 
-    contours1, _ = cv2.findContours(thresh1, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    max_area = 0
-    c = 0
-    for ctr1 in contours1:
-        area = cv2.contourArea(ctr1)
-        if area > 1000:
-                if area > max_area:
-                    max_area = area
-                    best_cnt = ctr1
-                    image = cv2.drawContours(image, contours1, c, (0, 255, 0), 3)
-        c+=1
-    #best_cnt = smoothContour(best_cnt)
-    mask = np.zeros((gray.shape),np.uint8)
-    cv2.drawContours(mask,[best_cnt],0,255,-1)
-    cv2.drawContours(mask,[best_cnt],0,0,2)
-    
-    # mask out parts of the screen that are not the grid    
-    out = np.zeros_like(gray)
-    out[mask == 255] = gray[mask == 255]
-    
-    #detect circles inside the grid part only
-    bit_and = cv2.bitwise_and(cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB) , image)
-    circles = detectCircles(bit_and)
-    # blot out the circles
-    if (circles is not None):
-        for (x,y,r) in circles:
-            cv2.circle(out, (x, y), r+2, (0, 0, 0), -1)
+    board_contour = max(contours, key=cv2.contourArea)
+    x, y, width, height = cv2.boundingRect(board_contour)
+    if width == 0 or height == 0:
+        return [], None, 0, 0
+
+    board_gray = gray[y:y + height, x:x + width]
+    board_mask = np.zeros((height, width), dtype=np.uint8)
+    cv2.drawContours(board_mask, [board_contour], -1, 255, -1, offset=(-x, -y))
+    binary = cv2.threshold(board_gray, 35, 255, cv2.THRESH_BINARY)[1]
+    binary = cv2.bitwise_and(binary, binary, mask=board_mask)
+
+    vertical_length = max(20, height // 30)
+    horizontal_length = max(20, width // 30)
+    vertical_lines = cv2.morphologyEx(
+        binary,
+        cv2.MORPH_OPEN,
+        cv2.getStructuringElement(cv2.MORPH_RECT, (1, vertical_length)),
+    )
+    horizontal_lines = cv2.morphologyEx(
+        binary,
+        cv2.MORPH_OPEN,
+        cv2.getStructuringElement(cv2.MORPH_RECT, (horizontal_length, 1)),
+    )
+    column_lines = _projection_line_centers(vertical_lines, axis=0)
+    row_lines = _projection_line_centers(horizontal_lines, axis=1)
+    if len(column_lines) < 2 or len(row_lines) < 2:
+        return [], None, 0, 0
+
+    columns = len(column_lines) - 1
+    rows = len(row_lines) - 1
+    cell_width = float(np.median(np.diff(column_lines)))
+    cell_height = float(np.median(np.diff(row_lines)))
+    cell_pitch = min(cell_width, cell_height)
+    if cell_pitch <= 0:
+        return [], None, 0, 0
+
+    squares = []
+    for row in range(rows):
+        center_y = y + int(round((row_lines[row] + row_lines[row + 1]) / 2))
+        for column in range(columns):
+            center_x = x + int(round((column_lines[column] + column_lines[column + 1]) / 2))
+            squares.append(((center_x, center_y), (column + 1, row + 1)))
+
+    min_radius = max(10, int(round(cell_pitch * 0.28)))
+    max_radius = max(min_radius + 1, int(round(cell_pitch * 0.52)))
+    circles = detectCircles(
+        cv2.cvtColor(board_gray, cv2.COLOR_GRAY2BGR),
+        minRadius=min_radius,
+        maxRadius=max_radius,
+        minDistance=max(20, int(round(cell_pitch * 0.5))),
+    )
+    if circles is not None:
+        circles[:, 0] += x
+        circles[:, 1] += y
     else:
         print("No circles found!! fatal error!")
-    
-    blur = cv2.GaussianBlur(out, (9,9), 0)
-    thresh = cv2.adaptiveThreshold(blur, 255, 1, 1, 11, 2)
-    contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-    #calculate minimum area of a cell
-    minarea = np.square(image.shape[0]/MAX_TABLE_DIMENSION)
-    numSquares = 0
-
-    #coordinates of the first encountered piece to count rows and columns
-    firstX = 0
-    firstY = 0
-    #counters to count rows and columns
-    numX = 0
-    numY = 0
-    gameboard = -1
-    # lists to hold values for columns and rows to convert to gameboard grid coordinates
-    column_coords = []
-    row_coords = []
-    for c, ctr in enumerate(contours):
-        area = cv2.contourArea(ctr)
-        if area > max_area:
-            gameboard = c
-            #print("found board @ %ctr" % (hierarchy[gameboard, c, 3]))
-        if gameboard != -1 and hierarchy[gameboard, c,3] == 1:
-            M = cv2.moments(ctr)
-            cX = int(M["m10"] / M["m00"])
-            cY = int(M["m01"] / M["m00"])
-            # Save the first square's coordinates
-            if (firstX == 0 and firstY == 0):
-                firstX = cX
-                firstY = cY
-                numX = numX + 1
-                numY = numY + 1
-            else:
-            # Check if we are in the same row or column as the first square (center within 5px)
-                if np.abs(cX-firstX) < 5:
-                    numX = numX + 1
-                if np.abs(cY-firstY) < 5:
-                    numY = numY + 1
-            # save image coordinates, and empty board grid coordinates
-            squares.append(((cX, cY), (0, 0)))
-            column_coords.append(roundx(cX))
-            row_coords.append(roundx(cY))
-            numSquares = numSquares + 1
-            if displayImage and area > minarea/2:
-                cv2.drawContours(image, contours, c, (0, 255, 0), 3)
-    
-    # Make sure that lists of coordinates are unique, and listas are sorted
-    column_coords = uniquelist(column_coords)
-    row_coords = uniquelist(row_coords)
-    for sq_idx,((a,b),(_,_)) in enumerate(squares):
-        squares[sq_idx] = ((a,b),(1 + column_coords.index(roundx(a)), 1 + row_coords.index(roundx(b))))
-
-    #print("Dimensions: x: %d y:%d" % (numX, numY))
-    #print(row_coords, column_coords)
-
-    if displayImage:    
-        #cv2.imshow("thresholds", get_resized_for_display_img(thresh))
-        #cv2.imshow("mask", mask)
-        #cv2.imshow("New image", get_resized_for_display_img(out))
-        #cv2.imshow("Anded Color", get_resized_for_display_img(bit_and))
-        #cv2.imshow("blur1", blur)
-        #cv2.imshow("thresh1", thresh)
-        cv2.imshow("Final Image", get_resized_for_display_img(image))
+    if displayImage:
+        overlay = image.copy()
+        for (center_x, center_y), _ in squares:
+            cv2.drawMarker(overlay, (center_x, center_y), (0, 255, 0), cv2.MARKER_CROSS, 10, 2)
+        if circles is not None:
+            for center_x, center_y, radius in circles:
+                cv2.circle(overlay, (int(center_x), int(center_y)), int(radius), (0, 255, 0), 2)
+        cv2.imshow("Final Image", get_resized_for_display_img(overlay))
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-    
-    return squares, circles, int(numX), int(numY)
+
+    return squares, circles, rows, columns
 
 #function to take the input from a screengrab and put into the solvable Gameboard format
 def parseBoard(image, rows, cols, circles, squares)-> GameBoard:

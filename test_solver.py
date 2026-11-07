@@ -1,9 +1,12 @@
 import unittest
 
+import numpy as np
+
 from gameboard import GameBoard, Line
 from guiTools import C
 from solverTools import (
     _candidate_paths,
+    _color_name,
     _order_candidate_paths,
     _partial_board_failure,
     _priority_moves,
@@ -87,6 +90,11 @@ def build_8x8_quickwins_board():
 
 
 class SolverTests(unittest.TestCase):
+    def test_detected_colors_have_readable_debug_names(self):
+        self.assertEqual(_color_name((np.uint8(165), np.uint8(43), np.uint8(42))), "BROWN")
+        self.assertEqual(_color_name((np.uint8(129), np.uint8(0), np.uint8(127))), "PURPLE")
+        self.assertEqual(_color_name((np.uint8(160), np.uint8(138), np.uint8(81))), "TAN")
+
     def test_partial_board_rejects_separated_color_mates(self):
         board = GameBoard(3, 3)
         board.addPiece(1, 2, C.RED)

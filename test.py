@@ -118,17 +118,15 @@ class TestField(unittest.TestCase):
       "expected_pairs": 6
     }
 
-    '''
-    These are screengrabs that are not passing the detection test, but should be. They are included here for reference and future debugging.
-    '''
-    screengrabs_non_passing = {
+    # These captures previously failed detection and are retained as regressions.
+    screengrabs_recovered = {
       "filename": "screengrabs/s7_screen_12_15.png",
       "gridsize": {"x":12, "y":15},
-      "expected_pairs": 9
+      "expected_pairs": 10
     },{
       "filename": "screengrabs/s7_screen_12_12.png",
       "gridsize": {"x":12, "y":12},
-      "expected_pairs": 9
+      "expected_pairs": 13
     },{
       "filename": "screengrabs/s7_screen_11_14.png",
       "gridsize": {"x":11, "y":14},
@@ -136,35 +134,75 @@ class TestField(unittest.TestCase):
     },{
       "filename": "screengrabs/s21_screen_09_09.jpg",
       "gridsize": {"x":9, "y":9},
-      "expected_pairs": 6
+      "expected_pairs": 9
     },{
       "filename": "screengrabs/s21_screen_10_10.jpg",
       "gridsize": {"x":10, "y":10},
-      "expected_pairs": 6
+      "expected_pairs": 9
     },{
       "filename": "screengrabs/s21_screen_11_11.jpg",
       "gridsize": {"x":11, "y":11},
-      "expected_pairs": 6
+      "expected_pairs": 10
     },{
       "filename": "screengrabs/s21_screen_12_12.jpg",
       "gridsize": {"x":12, "y":12},
-      "expected_pairs": 6
+      "expected_pairs": 12
     },{
       "filename": "screengrabs/s21_screen_13_13.jpg",
       "gridsize": {"x":13, "y":13},
-      "expected_pairs": 6
+      "expected_pairs": 11
     },{
       "filename": "screengrabs/s21_screen_14_14.jpg",
       "gridsize": {"x":14, "y":14},
-      "expected_pairs": 6
+      "expected_pairs": 13
     },{
       "filename": "screengrabs/s21_screen_15_15.jpg",
       "gridsize": {"x":15, "y":15},
+      "expected_pairs": 16
+    },{
+      "filename": "screengrabs/s7_screen_05_05_4.png",
+      "gridsize": {"x":5, "y":5},
+      "expected_pairs": 4
+    },{
+      "filename": "screengrabs/s7_screen_05_05_5.png",
+      "gridsize": {"x":5, "y":5},
+      "expected_pairs": 4
+    },{
+      "filename": "screengrabs/s7_screen_13_13.png",
+      "gridsize": {"x":13, "y":13},
+      "expected_pairs": 14
+    },{
+      "filename": "screengrabs/s7_screen_14_14.png",
+      "gridsize": {"x":14, "y":14},
+      "expected_pairs": 15
+    },{
+      "filename": "screengrabs/s21_screen_08_10.jpg",
+      "gridsize": {"x":8, "y":10},
+      "expected_pairs": 8
+    },{
+      "filename": "screengrabs/s21_screen_09_11.jpg",
+      "gridsize": {"x":9, "y":11},
+      "expected_pairs": 10
+    },{
+      "filename": "screengrabs/s21_screen_10_12.jpg",
+      "gridsize": {"x":10, "y":12},
+      "expected_pairs": 8
+    },{
+      "filename": "screengrabs/s21_screen_11_13.jpg",
+      "gridsize": {"x":11, "y":13},
+      "expected_pairs": 13
+    },{
+      "filename": "screengrabs/s21_screen_12_14.jpg",
+      "gridsize": {"x":12, "y":14},
+      "expected_pairs": 10
+    },{
+      "filename": "screengrabs/s23_screen_08_08.jpg",
+      "gridsize": {"x":8, "y":8},
       "expected_pairs": 6
     }
 
     def testDetection(self):
-        for i in self.screengrabs:
+        for i in self.screengrabs + self.screengrabs_recovered:
             image = cv2.imread(i["filename"])
             _, circles, rows, cols = detectGrid(image)
             #print("Detecting circles in %s. Expecting %d circles: Found %d. Expecting %d columns: Found %d. Expecting %d rows: Found %d." % (i["filename"], i["expected_pairs"]*2, len(circles),i["gridsize"]["x"], cols, i["gridsize"]["y"], rows))
