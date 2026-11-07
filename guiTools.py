@@ -1,4 +1,5 @@
 from gameboard import Piece, Field, GameBoard, Line
+from datetime import datetime
 import pygame as pg
 
 """
@@ -66,6 +67,11 @@ def drawGrid(screen, w, h):
             pg.draw.rect(screen, C.SILVER, rect, 1)
 
 
+def _output_filename(board):
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    return "output/FlowFree_%d☓%d_%s.png" % (board.columns, board.rows, timestamp)
+
+
 class LiveGameboard:
     def __init__(self, board, block_size=60, update_delay=80):
         global BLOCK_SIZE
@@ -105,7 +111,7 @@ class LiveGameboard:
         self.board = board
         message = "Solved - close window or press Esc" if solved else "No solution - close window or press Esc"
         self._draw(message)
-        filename = "output/FlowFree_%d☓%d.png" % (board.columns, board.rows)
+        filename = _output_filename(board)
         image = self.screen.subsurface((0, 0, self.width, self.height)).copy()
         pg.image.save(image, filename)
         print("file {} has been saved".format(filename))
@@ -133,7 +139,7 @@ def drawGameboard(board, block_size = 40):
 
     # now save the drawing
     # can save as .bmp .tga .png or .jpg
-    fname = "output/FlowFree_%d☓%d.png" % (board.columns, board.rows)
+    fname = _output_filename(board)
     pg.image.save(win, fname)
     print("file {} has been saved".format(fname))
 
