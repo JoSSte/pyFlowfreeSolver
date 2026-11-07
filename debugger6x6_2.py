@@ -3,6 +3,8 @@ This is a gui debugger to print a gameboard.
 displays a pygame window and saves a .png file with the board.
 '''
 
+from time import time
+
 from gameboard import GameBoard, Line
 from guiTools import C, drawGameboard
 from solverTools import solve_board
@@ -27,11 +29,20 @@ gb.addPiece(4, 5, C.ORANGE)
 gb.addPiece(2, 2, C.CYAN)
 gb.addPiece(4, 4, C.CYAN)
 
+start = time.process_time_ns()
+
+
+
+print("Starting solve")
 solve_board(gb)
+end = time.process_time_ns()
 
 if(gb.isSolved()):
     print("HURRAH! WE SOLVED IT!")
 else:
     print("NOT SOLVED YET!?")
+
+print("Time taken: " + str(end - start) + " ns")
+
 
 drawGameboard(gb)

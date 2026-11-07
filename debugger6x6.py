@@ -6,6 +6,7 @@ displays a pygame window and saves a .png file with the board.
 from gameboard import GameBoard, Line
 from guiTools import C, drawGameboard
 from solverTools import solve_board
+import time
 
 COLS = 6
 ROWS = 6
@@ -25,11 +26,22 @@ gb.addPiece(6, 4, C.YELLOW)
 gb.addPiece(6, 1, C.ORANGE)
 gb.addPiece(4, 5, C.ORANGE)
 
+#drawGameboard(gb)
+
+
+start = time.process_time_ns()
+
+
+
+print("Starting solve")
 solve_board(gb)
+end = time.process_time_ns()
 
 if(gb.isSolved()):
     print("HURRAH! WE SOLVED IT!")
 else:
     print("NOT SOLVED YET!?")
+
+print("Time taken: " + str(end - start) + " ns")
 
 drawGameboard(gb)
