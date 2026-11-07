@@ -118,6 +118,9 @@ class TestField(unittest.TestCase):
       "expected_pairs": 6
     }
 
+    '''
+    These are screengrabs that are not passing the detection test, but should be. They are included here for reference and future debugging.
+    '''
     screengrabs_non_passing = {
       "filename": "screengrabs/s7_screen_12_15.png",
       "gridsize": {"x":12, "y":15},

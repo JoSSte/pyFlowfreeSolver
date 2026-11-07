@@ -2,6 +2,12 @@
 
 # https://github.com/engineer-man/youtube/blob/master/105/stick_hero.py
 
+''' 
+
+Incomplete code to capture a screenshot from an Android device using ADB and save it as a PNG file.
+
+'''
+
 from ppadb.client import Client as AdbClient
 
 from PIL import Image

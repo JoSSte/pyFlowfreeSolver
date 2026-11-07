@@ -1,5 +1,6 @@
 from gameboard import Piece, Field, GameBoard, Line
 from datetime import datetime
+from pathlib import Path
 import pygame as pg
 
 """
@@ -69,7 +70,10 @@ def drawGrid(screen, w, h):
 
 def _output_filename(board):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-    return "output/FlowFree_%d☓%d_%s.png" % (board.columns, board.rows, timestamp)
+    output_dir = Path(__file__).resolve().parent / "output"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    filename = "FlowFree_%d☓%d_%s.png" % (board.columns, board.rows, timestamp)
+    return str(output_dir / filename)
 
 
 class LiveGameboard:

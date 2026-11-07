@@ -1,4 +1,7 @@
-from win32api import GetSystemMetrics
+try:
+    from win32api import GetSystemMetrics
+except ImportError:
+    GetSystemMetrics = None
 import numpy as np
 import math
 import cv2
@@ -10,7 +13,10 @@ MAX_TABLE_DIMENSION = 15
 
 #resize image to fit on the screen
 def get_resized_for_display_img(img):
-    screen_w, screen_h = GetSystemMetrics(0), GetSystemMetrics(1)
+    if GetSystemMetrics is None:
+        screen_w, screen_h = img.shape[1], img.shape[0]
+    else:
+        screen_w, screen_h = GetSystemMetrics(0), GetSystemMetrics(1)
     #print("screen size", screen_w, screen_h)
     if(len(img.shape) == 2) :
         h, w = img.shape
