@@ -52,6 +52,7 @@ print(colors)
 
 
 for s in sets:
+    # find path https://www.simplifiedpython.net/a-star-algorithm-python-tutorial/
     print("Distance between (%d,%d) and (%d,%d) is %d" % (s.p1.column,s.p1.row, s.p2.column, s.p2.row,  dist(s.p1, s.p2)))
 
 drawGameboard(board)

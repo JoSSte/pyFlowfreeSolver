@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 from ppadb.client import Client as AdbClient
+'''
+incomplete experiment to install the apk using adb isf not installed 
+'''
 
 # https://android.stackexchange.com/questions/221204/how-to-install-xapk-apks-or-multiple-apks-via-adb
 
