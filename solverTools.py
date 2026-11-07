@@ -18,6 +18,23 @@ class FieldPair:
         self.p2 = p2
 
 
+def _color_name(color):
+    color_names = {
+        (255, 0, 0): "RED",
+        (0, 141, 0): "GREEN",
+        (12, 41, 254): "BLUE",
+        (234, 224, 0): "YELLOW",
+        (251, 137, 0): "ORANGE",
+        (128, 0, 128): "PURPLE",
+        (255, 10, 201): "PINK",
+        (165, 42, 42): "BROWN",
+        (0, 255, 255): "CYAN",
+    }
+    if isinstance(color, tuple):
+        return color_names.get(color, str(color))
+    return str(color)
+
+
 def _neighbors(position, columns, rows):
     x, y = position
     for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
@@ -64,7 +81,16 @@ def _candidate_paths(board: GameBoard, color, start, end, reserved, extra_steps=
     return results
 
 
-def solve_board(board: GameBoard, max_extra_steps=10):
+def _remove_path_from_board(board: GameBoard, color, path):
+    board.lines = [line for line in board.lines if line.color != color or line.path != path]
+    for x, y in path:
+        field = board.getField(x, y)
+        if field.piece is None and field.line == color:
+            field.line = None
+            field.occupied = False
+
+
+def solve_board(board: GameBoard, max_extra_steps=10, debug=False):
     color_pairs = defaultdict(list)
     for field in board.fields:
         if field.piece is not None:
@@ -99,15 +125,20 @@ def solve_board(board: GameBoard, max_extra_steps=10):
         for path in best_paths:
             next_used = set(used_cells)
             next_used.update(path)
+            if debug:
+                print(f"Trying {_color_name(best_color)} with line length {len(path)}")
+            board.addLine(Line(best_color, path))
             chosen_paths[best_color] = path
             if backtrack([color for color in colors_left if color != best_color], next_used):
+                if debug:
+                    print(f"{_color_name(best_color)} connected with line length {len(path)}")
                 return True
+            if debug:
+                print(f"{_color_name(best_color)} disconnected")
+            _remove_path_from_board(board, best_color, path)
             del chosen_paths[best_color]
 
         return False
 
-    if backtrack(remaining, reserved):
-        for color, path in chosen_paths.items():
-            board.addLine(Line(color, path))
-
+    backtrack(remaining, reserved)
     return board
