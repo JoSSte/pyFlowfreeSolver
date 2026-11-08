@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 
 from shapeDetection import detectGrid, parseBoard
-from solverTools import solve_board
+from constraintSolver import solve_board_cp_sat
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -92,9 +92,7 @@ class ScreengrabPipelineTests(unittest.TestCase):
             self.assertTrue(cv2.imwrite(str(solved_path), status), f"Could not write {solved_path}")
             self.skipTest("Detected piece locations do not form complete pairs")
 
-        max_extra_steps = 10 if max(rows, columns) <= 6 else 18
-        solve_board(board, max_extra_steps=max_extra_steps)
-        solved = board.isSolved()
+        solved = solve_board_cp_sat(board)
         message = f"{columns}x{rows}; {len(color_counts)} pairs; {len(board.lines)} lines"
         solution = _solution_overlay(original, board, squares, solved, message)
         self.assertTrue(cv2.imwrite(str(solved_path), solution), f"Could not write {solved_path}")

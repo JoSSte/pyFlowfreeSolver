@@ -116,10 +116,7 @@ class TestField(unittest.TestCase):
       "filename": "screengrabs/s21_screen_08_08.jpg",
       "gridsize": {"x":8, "y":8},
       "expected_pairs": 6
-    }
-
-    # These captures previously failed detection and are retained as regressions.
-    screengrabs_recovered = {
+    },{
       "filename": "screengrabs/s7_screen_12_15.png",
       "gridsize": {"x":12, "y":15},
       "expected_pairs": 10
@@ -202,7 +199,7 @@ class TestField(unittest.TestCase):
     }
 
     def testDetection(self):
-        for i in self.screengrabs + self.screengrabs_recovered:
+        for i in self.screengrabs:
             image = cv2.imread(i["filename"])
             _, circles, rows, cols = detectGrid(image)
             #print("Detecting circles in %s. Expecting %d circles: Found %d. Expecting %d columns: Found %d. Expecting %d rows: Found %d." % (i["filename"], i["expected_pairs"]*2, len(circles),i["gridsize"]["x"], cols, i["gridsize"]["y"], rows))

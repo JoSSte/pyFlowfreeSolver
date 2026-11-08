@@ -77,7 +77,8 @@ def _can_extend_path(next_cell, current, end, path, seen, blocked, max_length, b
     return distance_to_end <= max_length - len(path)
 
 
-def _candidate_paths(board: GameBoard, color, start, end, reserved, extra_steps=10):
+def _candidate_paths(board: GameBoard, color, start, end, reserved, extra_steps=10, limit=None,
+                     max_length=None):
     blocked = {
         (field.column, field.row)
         for field in board.fields
@@ -90,10 +91,13 @@ def _candidate_paths(board: GameBoard, color, start, end, reserved, extra_steps=
     }
     blocked |= set(reserved)
 
-    max_length = abs(start[0] - end[0]) + abs(start[1] - end[1]) + extra_steps
+    step_cap = abs(start[0] - end[0]) + abs(start[1] - end[1]) + extra_steps
+    max_length = step_cap if max_length is None else min(max_length, step_cap)
     results = []
 
     def dfs(current, path, seen):
+        if limit is not None and len(results) >= limit:
+            return
         if len(path) > max_length:
             return
         if current == end:
@@ -474,17 +478,77 @@ def _priority_moves(board, color_pairs, colors_left, reserved):
     return moves
 
 
+COUNT_LIMIT = 64
+
+
+def _area_length_cap(board, color_pairs, colors_left, color, used_cells):
+    """Upper bound on the number of cells a path for ``color`` can use.
+
+    The path lies inside the open region containing its endpoints. Every other
+    remaining color with endpoints in that region needs at least
+    ``manhattan + 1`` of those cells, so the rest is the most this path can
+    take. This never excludes a valid route and tightens as the board fills.
+    """
+    start, _ = color_pairs[color]
+    open_cells = {
+        (field.column, field.row)
+        for field in board.fields
+        if (field.column, field.row) not in used_cells and field.line is None
+        and (field.piece is None or field.piece.color in colors_left)
+    }
+    region = _reachable_cells(board, start, open_cells)
+    reserved_by_others = 0
+    for other in colors_left:
+        if other == color:
+            continue
+        a, b = color_pairs[other]
+        if a in region and b in region:
+            reserved_by_others += abs(a[0] - b[0]) + abs(a[1] - b[1]) + 1
+    return len(region) - reserved_by_others
+
+
+def _color_paths(board, color_pairs, colors_left, color, used_cells, max_extra_steps,
+                 limit=COUNT_LIMIT):
+    """Return the candidate paths for a color.
+
+    Paths are bounded by the area-based cap, which is exact, and enumeration
+    stops at ``limit``. Only if a color has too many routes to enumerate does
+    it fall back to the tighter ``max_extra_steps`` cap.
+    """
+    start, end = color_pairs[color]
+    area_cap = _area_length_cap(board, color_pairs, colors_left, color, used_cells)
+    unbounded = board.columns * board.rows
+    paths = _candidate_paths(board, color, start, end, used_cells, unbounded, limit, area_cap)
+    if len(paths) < limit:
+        return paths
+    return _candidate_paths(board, color, start, end, used_cells, max_extra_steps, None, area_cap)
+
+
 def _select_color(board, color_pairs, colors_left, used_cells, max_extra_steps):
+    """Pick the most constrained color (fewest candidate paths).
+
+    Counting stops early once a color cannot beat the current best, so only the
+    chosen color has its full candidate list enumerated.
+    """
     best_color = None
     best_paths = None
     for color in colors_left:
+        limit = COUNT_LIMIT if best_paths is None else len(best_paths)
         start, end = color_pairs[color]
-        paths = _candidate_paths(board, color, start, end, used_cells, max_extra_steps)
+        area_cap = _area_length_cap(board, color_pairs, colors_left, color, used_cells)
+        paths = _candidate_paths(
+            board, color, start, end, used_cells, board.columns * board.rows, limit, area_cap
+        )
         if not paths:
             return None, None
         if best_paths is None or len(paths) < len(best_paths):
-            best_color = color
-            best_paths = paths
+            best_color, best_paths = color, paths
+            if len(paths) == 1:
+                break
+    if len(best_paths) >= COUNT_LIMIT:
+        best_paths = _color_paths(
+            board, color_pairs, colors_left, best_color, used_cells, max_extra_steps, COUNT_LIMIT
+        )
     return best_color, _order_candidate_paths(best_paths)
 
 
@@ -496,7 +560,7 @@ def _report_event(debug, on_update, board, debug_message, gui_message):
 
 
 def _try_candidate(board, color_pairs, colors_left, used_cells, color, path,
-                   max_extra_steps, debug, on_update):
+                   max_extra_steps, debug, on_update, failed_states):
     next_used = used_cells | set(path)
     next_colors = [remaining_color for remaining_color in colors_left if remaining_color != color]
     color_name = _color_name(color)
@@ -514,7 +578,8 @@ def _try_candidate(board, color_pairs, colors_left, used_cells, color, path,
         solved = False
     else:
         solved = _search_paths(
-            board, color_pairs, next_colors, next_used, max_extra_steps, debug, on_update
+            board, color_pairs, next_colors, next_used, max_extra_steps, debug, on_update,
+            failed_states,
         )
 
     if solved:
@@ -530,30 +595,48 @@ def _try_candidate(board, color_pairs, colors_left, used_cells, color, path,
     return False
 
 
-def _search_paths(board, color_pairs, colors_left, used_cells, max_extra_steps, debug, on_update):
+def _search_paths(board, color_pairs, colors_left, used_cells, max_extra_steps, debug, on_update,
+                  failed_states=None):
     if not colors_left:
         return _partial_board_failure(board, color_pairs, colors_left) is None
 
-    prioritized = defaultdict(set)
-    for color, path in _priority_moves(board, color_pairs, colors_left, used_cells):
-        prioritized[color].add(tuple(path))
-        if _try_candidate(
-            board, color_pairs, colors_left, used_cells, color, path,
-            max_extra_steps, debug, on_update,
-        ):
-            return True
-
-    color, paths = _select_color(board, color_pairs, colors_left, used_cells, max_extra_steps)
-    if color is None:
+    # The remaining sub-problem depends only on which cells are occupied, so a
+    # state that failed once fails again no matter which order produced it.
+    if failed_states is None:
+        failed_states = set()
+    state_key = frozenset(used_cells)
+    if state_key in failed_states:
+        _report_event(debug, on_update, board, "Skipping already-failed state", "Skipped known dead end")
         return False
-    for path in paths:
-        if tuple(path) in prioritized[color]:
-            continue
-        if _try_candidate(
-            board, color_pairs, colors_left, used_cells, color, path,
-            max_extra_steps, debug, on_update,
-        ):
-            return True
+
+    # Branch on a single color: every solution must contain some path for it,
+    # so this stays complete while avoiding re-exploring color permutations.
+    # Colors with a "quick win" route (diagonal, edge, short straight) are
+    # branched on first; otherwise pick the most constrained color.
+    quick_moves = _priority_moves(board, color_pairs, colors_left, used_cells)
+    if quick_moves:
+        color = quick_moves[0][0]
+        paths = _color_paths(board, color_pairs, colors_left, color, used_cells, max_extra_steps)
+        paths = _order_candidate_paths(paths) if paths else None
+        if paths is None:
+            color = None
+    else:
+        color, paths = _select_color(board, color_pairs, colors_left, used_cells, max_extra_steps)
+    if color is not None:
+        priority = [path for move_color, path in quick_moves if move_color == color]
+        seen = set()
+        for path in priority + paths:
+            key = tuple(path)
+            if key in seen:
+                continue
+            seen.add(key)
+            if _try_candidate(
+                board, color_pairs, colors_left, used_cells, color, path,
+                max_extra_steps, debug, on_update, failed_states,
+            ):
+                return True
+
+    failed_states.add(state_key)
     return False
 
 
@@ -572,5 +655,19 @@ def solve_board(board: GameBoard, max_extra_steps=10, debug=False, on_update=Non
     if not remaining:
         return board
 
-    _search_paths(board, color_pairs, remaining, reserved, max_extra_steps, debug, on_update)
+    # Widen the path-length cap when a search fails: a too-tight cap can
+    # exclude the only valid route for a color.
+    open_cells = sum(field.line is None for field in board.fields)
+    extra_steps = max_extra_steps
+    while True:
+        if _search_paths(board, color_pairs, remaining, reserved, extra_steps, debug, on_update, set()):
+            break
+        if extra_steps >= open_cells:
+            break
+        extra_steps = min(open_cells, extra_steps * 2)
+        _report_event(
+            debug, on_update, board,
+            f"Retrying with max_extra_steps={extra_steps}",
+            f"Widening path cap to {extra_steps}",
+        )
     return board

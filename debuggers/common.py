@@ -6,6 +6,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from guiTools import LiveGameboard, drawGameboard
+from constraintSolver import solve_board_cp_sat
 from solverTools import solve_board
 
 
@@ -15,17 +16,17 @@ def run_debugger(board, max_extra_steps=10):
     )
     parser.add_argument("--debug", action="store_true", help="Display solver debug output.")
     parser.add_argument("--gui", action="store_true", help="Show the solver's progress in a live window.")
+    parser.add_argument("--dfs", action="store_true", help="Use the path-search solver instead of CP-SAT.")
     args = parser.parse_args()
 
     start = time.process_time_ns()
     print("Starting solve")
     live_gui = LiveGameboard(board) if args.gui else None
-    solve_board(
-        board,
-        max_extra_steps=max_extra_steps,
-        debug=args.debug,
-        on_update=live_gui.update if live_gui else None,
-    )
+    on_update = live_gui.update if live_gui else None
+    if args.dfs:
+        solve_board(board, max_extra_steps=max_extra_steps, debug=args.debug, on_update=on_update)
+    else:
+        solve_board_cp_sat(board, debug=args.debug, on_update=on_update)
     end = time.process_time_ns()
 
     solved = board.isSolved()
