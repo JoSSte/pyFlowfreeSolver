@@ -182,3 +182,15 @@ python -m debuggers.debugger8x8_2 --debug --gui
 ```
 
 The GUI and static board renderer save timestamped images in the project-level `output/` directory, even when a debugger is launched with `debuggers/` as the working directory.
+
+### Live solving from a phone
+
+With an Android device connected over ADB (`adb devices` lists it):
+
+```bash
+python flow.py              # live window, q or Esc to quit
+python flow.py --once       # grab, solve and save one frame
+python flow.py --no-window  # live loop without a window
+```
+
+Each frame is captured over ADB, detected and solved with CP-SAT, and shown with the solution overlaid. A second window shows a static image of the solved grid. It is pinned once a new puzzle has been solved in two consecutive frames and does not change while you play. At that point three files are saved in `livegrabs/`: the raw grab `live_<timestamp>.png`, the solved overlay `live_<timestamp>_solved.png`, and the cropped solved board `live_<timestamp>_board.png`. Dimmed frames (screen about to sleep, "extra dim") are brightened before detection.
