@@ -1,0 +1,1 @@
+"""Board setup scripts for exercising the solver."""

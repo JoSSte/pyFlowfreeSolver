@@ -1,85 +1,93 @@
 # Flow free solver
+
 This is a pet project to learn some OpenCV and Python. The idea came when trying to quantify the intuitive leaps that occur when solving Flow Free. A glance at some empty spaces quickly indicate whether you can fit the remaining lines into it, and whether you are making choke points.  
 
 In its simplest form, this is a path solving problem. Normally, this problem is to find the shortest path between two points, and in this game that may not always be the right path, since you need to both connect all the dots, and fill all fields on the board.  Several considerations have come to mind. The simplest (5x5 - 6x6) levels may be solvable by using Dijkstra or A*, since the space is limited, and the number of loops and circuitious routes is limited.  
 
-However, the harder boards (>8x8) may need more advanced algorithms. 
+However, the harder boards (>8x8) may need more advanced algorithms.
 
 One approach could be to do a modified A* variant which both takes into account whether the other colors are cut off, or a set of failure contitions are triggered, which will invalidate the deduced path.
 
 My first priority is not to be as Pythonic as possible, but to get a feel for the different libraries related to computer vision.  
 
-# Current issues and notes
-* Ads make a lot of noise, and give a lot of extra thresholds 
+## Current issues and notes
+
+* Ads make a lot of noise, and give a lot of extra thresholds
   * Quick fix is to just buy the ad-free (which i would prefer), but that requires GAPPS on th3 device, which is not the case on current test device
   * Even though we are blacking out everything but the playing board, we are still getting contours detected there. Is this a case of similarly named variables?
 * Gradient background gives shadows on some boards which are not easily removed. Current fix is to use a bigger Gaussian blur, but it is my impression that this solution is generating extra contours.  
 
-
 ## Overall TODO list
+
 First figure out if we can solve the problem, then detect the layout and problem, and draw the solution...
 
 1. [x] Set up game board
 1. [ ] Solve pathing
-   - [ ] Create layout for field
-   - [ ] Connect Colours
-   - [ ] Find orphans
-   - [ ] Solve paths
-   - [ ] Advanced pathfinding/optimisations
+   * [ ] Create layout for field
+   * [x] Connect Colours
+   * [ ] Find orphans
+   * [x] Solve paths
+   * [ ] Advanced pathfinding/optimisations
 1. [x] Draw solution
 1. [x] Detect playing field (only rectangles to start with)
 1. [x] Detect piece placement
 1. [x] Save picture of solution
-1. [ ] Draw solution on device
-1. [ ] Save screenshot of completed level from device
-1. [ ] Get next level
-   - [ ] Detect ad (currently running on device without GAPPS so can't remove ads)
-   - [ ] Decline ad
-   - [ ] Get next pack when pack completed (you wish) 
+1. [ ] (postponed) Draw solution on device
+1. [ ] (postponed) Save screenshot of completed level from device
+1. [ ] (postponed) Get next level
+   * [ ] (postponed) Detect ad (currently running on device without GAPPS so can't remove ads)
+   * [ ] (postponed) Decline ad
+   * [ ] (postponed) Get next pack when pack completed (you wish)
 
 ## Board setup
 
 ### Calculating Neighbouring cells
+
 For somne reason, I put this into a single list instead of using a two-dimensional list. The advantage is that it is easy to iterate through, and as long as the mathemtics is clear, figuring out the dimensions and constraints is actually quite simple.  
 I have decided to keep the single list for now.  
 Considering height `h` and width `w`, the rectangle will be like this:
 
 ![Conceptual bord](dimensions.svg)
 
-So all non-edge cells (denoted `n`) have four neighbours: 
+So all non-edge cells (denoted `n`) have four neighbours:
+
 1. North (`n-w`)
 1. South (`n+w`)
 1. West (`n-1`)
 1. East (`n+1`)
 
-### Cells with 2 neighbours only 
+### Cells with 2 neighbours only
+
 The four corners that have only two neighbours are:
+
 1. North-West (`n=1`)
 1. North-East (`n=w`)
 1. South-West (`n=1`)
 1. South-East (`n=((h-1)*w)+1`)
 
-### Cells on edges 
+### Cells on edges
+
 This includes the cells with only 2 neighbours twice, except for cell 1
+
 1. Top row (`n<=w`)
 1. Bottom row (`n>=(h*w)-w`)
 1. First column (`n%(w+1)=0`) (doesn't match cell 1)
 1. Last column (`n%w=0`)
 
 ### Calculating total number of intersections
+
 All the vertical paths can be summed up as the number of columns minus one, multiplied by the number of rows. Similarly, the horizontal paths can be summe up as the number of rows minus one, multiplied my the number of columns. 
 
 `t=(w-1)*h+(h-1)*w`
 
-
-
 ## Failure Conditions
+
 Since we are solving not only a single path, but several paths (the bigger levels hhave between 9 and 12 pairs that need to be matched), it is advantageous to figure out if there are coonditions that will enable us to discard a path as early as possible.
 Conditions that would cause a failure state, ie the game would be unsolvable.  
 
 __*TODO:*__ screenshots for each of these conditions.
 
-* **Unreacvhable unoccupied cell.** Cell where all neighbours are occupied, but the cell itself isn't.
+* **Unreachable unoccupied cell.** Cell where all neighbours are occupied, but the cell itself isn't.
 ![unreachable](screengrabs/failures/2_orphans.jpg)
 ![unreachable](screengrabs/failures/corner_orphan.jpg)
 * **Single cell kink.** Line creating a cell with only one free neighbour, all other (max 3) neighbouring cells occupied.
@@ -91,10 +99,12 @@ __*TODO:*__ screenshots for each of these conditions.
 ## Path solving tactics
 
 ### Path solving
+
 * **Outside to inside.** Finding a piece in the outer cells, and following the border clockwise (CW) or counter-clockwise (CCW)., repeating the method on each colour pair, until solved.  
 This tactic wil most likely work for simple, small boards. In case of having to snake around another this tactic will fail. May be able to be used as a trailbreaker.
   * CCW pseudo-algorithm
-  ```
+
+  ```pseudocode
   if No neighbour on side X
     if we can go Left compared to X (if x = SOUTH, direction (D) = East, D+1 = North)
       if D unoccupied
@@ -106,11 +116,81 @@ This tactic wil most likely work for simple, small boards. In case of having to 
           fail
   
   ```
+
 * **Single cell path.** If both pieces share a single cell neighbour, so that filling out that cell will connect them. E.g. diagonals may be a more certain win, verticals or horizontals may not be.
 * **Path finding algorithms** These will find the shortest path, but may not be efficient for finding the first paths in an unsolved board.
   * **A-Star.** Using the [A*](https://en.wikipedia.org/wiki/A*_search_algorithm) algorithm for path finding. [Sample Python Implementation](https://www.simplifiedpython.net/a-star-algorithm-python-tutorial/)
   * **Dijkstra.** Using [Dijkstra's algorithm](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm) for path finding. [Sample Python implementation](https://www.udacity.com/blog/2021/10/implementing-dijkstras-algorithm-in-python.html)
 
 ### Path certainty score
+
 * Any path creating a failure condition with no other paths drawn should be considered unusable - negative score.
 * A single cell path where there is a dead end e.g. in the corner of a board should be a high scorer.
+
+### venv
+
+#### Linux
+
+##### Init
+
+`python3 -m venv venv`
+
+##### switch to env
+
+`source venv/bin/activate`
+
+## Tests and screenshot pipeline
+
+Run commands from the project root with the project environment activated and dependencies installed from `requirements.txt`.
+
+### Solver tests
+
+```bash
+python -m unittest -v test_solver
+```
+
+These tests cover the 5x5, 5x6, 6x6, and seeded 8x8 solver boards, as well as route priorities and pruning for orphan regions, disconnected pairs, kinks, forced self-touches, and bottlenecks.
+
+### Detection tests
+
+```bash
+python -m unittest -v test
+```
+
+This runs the board model checks and the existing detection checks against their listed sample images. Detection reports the grid dimensions, cell centers, and colored endpoint circles.
+
+### End-to-end screenshot tests
+
+```bash
+python -m unittest -v test_screengrab_pipeline
+```
+
+The pipeline discovers image files directly under `screengrabs/` (it does not recurse into subfolders), detects the grid and pieces, builds a `GameBoard`, and attempts to solve it. For each image it writes two timestamp-independent PNGs under `output/`:
+
+* `<image-name>_detected.png` shows the detected grid-cell centers and endpoint circles.
+* `<image-name>_solved.png` overlays the solver's paths and reports `SOLVED` or `NOT SOLVED`.
+
+An image is skipped when grid/circle detection is incomplete or detected dots do not form complete color pairs. Its diagnostic images are still saved. A board with valid detected pairs that the solver cannot complete is a test failure; its `NOT SOLVED` image is saved for inspection. This separates detection limitations from solver limitations. The solver's search bound in this test is 10 extra steps for boards up to 6x6 and 18 for larger boards.
+
+### Debugger boards
+
+Debugger scripts live under `debuggers/` and accept `--debug` and `--gui`:
+
+```bash
+python debuggers/debugger10x10.py --debug --gui
+python -m debuggers.debugger8x8_2 --debug --gui
+```
+
+The GUI and static board renderer save timestamped images in the project-level `output/` directory, even when a debugger is launched with `debuggers/` as the working directory.
+
+### Live solving from a phone
+
+With an Android device connected over ADB (`adb devices` lists it):
+
+```bash
+python flow.py              # live window, q or Esc to quit
+python flow.py --once       # grab, solve and save one frame
+python flow.py --no-window  # live loop without a window
+```
+
+Each frame is captured over ADB, detected and solved with CP-SAT, and shown with the solution overlaid. A second window shows a static image of the solved grid. It is pinned once a new puzzle has been solved in two consecutive frames and does not change while you play. At that point three files are saved in `livegrabs/`: the raw grab `live_<timestamp>.png`, the solved overlay `live_<timestamp>_solved.png`, and the cropped solved board `live_<timestamp>_board.png`. Dimmed frames (screen about to sleep, "extra dim") are brightened before detection.

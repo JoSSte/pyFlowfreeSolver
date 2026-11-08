@@ -4,7 +4,13 @@ class Piece:
 
     def __init__(self, color):
         self.color = color
+        self.column = 0
+        self.row = 0
         Piece.pieceCount += 1
+    
+    def __str__(self):
+     return "[%d,%d] (%d,%d,%d)" % (self.column, self.row, self.color[0], self.color[1], self.color[2])
+
 
 
 class Line:
@@ -44,6 +50,9 @@ class Field:
         self.x = 0
         self.y = 0
     
+    def __str__(self):
+     return "#%d\tR:%d C:%d\tPiece:%s" % (self.number,self.row, self.column, self.piece)
+    
     def addCoordinate(self, x, y):
         self.x = x
         self.y = y
@@ -52,6 +61,8 @@ class Field:
         # no check for line presence since this is not drawn after lines...
         self.occupied = True
         self.piece = piece
+        self.piece.row = self.row
+        self.piece.column = self.column
 
     def addLine(self, colour):
         if(self.occupied):
@@ -199,13 +210,35 @@ class GameBoard:
         self.lines.append(l)
 
     def isSolved(self)->bool:
-        solved = True
-        if(len(self.fields)/2 != len(self.lines)):
-            #print("Number of piece-pairs does not match number of lines. Not solved...")
-            solved = False
         for f in self.fields:
-            if (not f.isOccupied()):
-                #print("%d, %d is unoccupied" % (f.getX(), f.getY()))
-                solved = False
+            if f.piece is None and f.line is None:
+                return False
 
-        return solved
+        piece_pairs = {}
+        for f in self.fields:
+            if f.piece is not None:
+                piece_pairs.setdefault(f.piece.color, []).append((f.column, f.row))
+
+        for color, positions in piece_pairs.items():
+            if len(positions) != 2:
+                return False
+
+            start, end = positions
+            queue = [start]
+            visited = {start}
+            line_cells = {(field.column, field.row) for field in self.fields if field.line == color}
+            line_cells.update(positions)
+
+            while queue:
+                current = queue.pop()
+                for next_cell in ((current[0] + 1, current[1]), (current[0] - 1, current[1]), (current[0], current[1] + 1), (current[0], current[1] - 1)):
+                    if next_cell in visited:
+                        continue
+                    if 1 <= next_cell[0] <= self.columns and 1 <= next_cell[1] <= self.rows and next_cell in line_cells:
+                        visited.add(next_cell)
+                        queue.append(next_cell)
+
+            if end not in visited:
+                return False
+
+        return True
